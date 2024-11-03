@@ -1,32 +1,77 @@
 import React from 'react';
-
-interface NumberItem {
-  number: string;
-  message?: string;
-}
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Switch } from './ui/switch';
+import { Button } from './ui/button';
+import { useToast } from '../hooks/use-toast';
+import { toggleNumberStatus, deleteNumber } from '../services/api';
+import { WhatsappNumber, FirebaseUserType } from '../types';
 
 interface NumberListProps {
-  numbers: NumberItem[];
+  numbers: WhatsappNumber[];
+  firebaseUser: FirebaseUserType;
+  onNumbersChange: () => void;
 }
 
-const NumberList: React.FC<NumberListProps> = ({ numbers }) => {
+const NumberList: React.FC<NumberListProps> = ({ numbers, firebaseUser, onNumbersChange }) => {
+  const { toast } = useToast();
+
+  const handleToggleStatus = async (numberId: string, currentStatus: boolean) => {
+    try {
+      await toggleNumberStatus(firebaseUser.uid, numberId, currentStatus);
+      onNumbersChange();
+      toast({
+        title: "Status do número alterado com sucesso",
+        description: new Date().toLocaleString(),
+      });
+    } catch (error) {
+      console.error('Erro ao alterar status do número:', error);
+    }
+  };
+
+  const handleDelete = async (numberId: string) => {
+    try {
+      await deleteNumber(firebaseUser.uid, numberId);
+      onNumbersChange();
+      toast({
+        title: "Número deletado com sucesso.",
+        description: new Date().toLocaleString(),
+      });
+    } catch (error) {
+      console.error('Erro ao deletar número:', error);
+    }
+  };
+
   return (
-    <div className="mt-6">
-      <h2 className="text-lg font-medium text-gray-900">Números Cadastrados</h2>
-      {numbers.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-500">Nenhum número cadastrado ainda.</p>
-      ) : (
-        <ul className="mt-2 divide-y divide-gray-200">
-          {numbers.map((item, index) => (
-            <li key={index} className="py-2">
-              <span className="text-sm font-medium text-gray-900">{item.number}</span>
-              {item.message && (
-                <p className="text-sm text-gray-500">{item.message}</p>
-              )}
-            </li>
+    <div className='max-w-[70%] w-full border border-gray-200 p-4 rounded-xl'>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[250px]">Número</TableHead>
+            <TableHead>Texto</TableHead>
+            <TableHead className='text-right'>Status</TableHead>
+            <TableHead className='text-right'>Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {numbers.map((num) => (
+            <TableRow key={num._id}>
+              <TableCell className="font-medium">{num.number}</TableCell>
+              <TableCell>{num.text || 'Sem texto'}</TableCell>
+              <TableCell className='text-right'>
+                <Switch
+                  checked={num.isActive}
+                  onCheckedChange={() => handleToggleStatus(num._id, num.isActive)}
+                />
+              </TableCell>
+              <TableCell className='text-right'>
+                <Button onClick={() => handleDelete(num._id)}>
+                  Deletar
+                </Button>
+              </TableCell>
+            </TableRow>
           ))}
-        </ul>
-      )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
