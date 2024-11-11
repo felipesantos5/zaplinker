@@ -45,9 +45,9 @@ const WorkspaceList = () => {
                 </Link>
               </TableCell>
               <TableCell className='text-right'>
-                {/* <button onClick={() => handleEditWorkSpace(workspace)}>
+                <button onClick={() => handleEditWorkSpace(workspace)}>
                   <FiMoreVertical />
-                </button> */}
+                </button>
               </TableCell>
             </TableRow>
           ))}

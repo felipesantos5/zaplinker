@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Workspace } from '@/utils/types/types';
 
-const WorkspaceDetail = () => {
+const WorkspaceEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getWorkspace, updateWorkspace } = useWorkspace();
@@ -15,9 +15,8 @@ const WorkspaceDetail = () => {
     const fetchWorkspace = async () => {
       if (id) {
         try {
+          console.log(id)
           const data = await getWorkspace(id);
-          console.log('a')
-          console.log(data)
           setWorkspace(data);
         } catch (error) {
           console.error('Erro ao buscar workspace:', error);
@@ -76,4 +75,4 @@ const WorkspaceDetail = () => {
   );
 };
 
-export default WorkspaceDetail;
+export default WorkspaceEdit;

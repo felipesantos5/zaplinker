@@ -140,6 +140,29 @@ app.get("/api/workspaces", authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/api/workspace/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar o workspace verificando se pertence ao usuário autenticado
+    const workspace = await Workspace.findOne({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    res.json(workspace);
+  } catch (error) {
+    res.status(500).json({
+      message: "Erro ao buscar workspace",
+      error: error.message,
+    });
+  }
+});
+
 // Rota para adicionar um novo número (atualizada para usar workspaceId)
 app.post("/api/whatsapp", authMiddleware, async (req, res) => {
   try {
@@ -167,14 +190,12 @@ app.get("/api/whatsapp/:workspaceId", authMiddleware, async (req, res) => {
     // Verificar se o workspace pertence ao usuário
     const workspace = await Workspace.findOne({ _id: workspaceId, userId: req.user._id });
     if (!workspace) {
-      console.log("error");
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
     const numbers = await WhatsappNumber.find({ workspaceId });
     res.json(numbers);
   } catch (error) {
-    console.log(error);
     res.status(400).json({ message: "Erro ao obter números", error: error.message });
   }
 });
