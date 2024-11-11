@@ -18,30 +18,40 @@ const User = mongoose.model(
     email: { type: String, required: true },
     displayName: String,
     photoURL: String,
-    customUrl: { type: String, unique: true, sparse: true },
+    createdAt: { type: Date, default: Date.now },
+    personalHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
+    },
+  })
+);
+
+// Novo modelo de Workspace
+const Workspace = mongoose.model(
+  "Workspace",
+  new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    customUrl: { type: String, unique: true, required: true },
+    name: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
   })
 );
 
-// Modelo de Número de WhatsApp
+// Modelo de Número de WhatsApp atualizado
 const WhatsappNumber = mongoose.model(
   "WhatsappNumber",
   new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: "Workspace", required: true },
     number: { type: String, required: true },
     text: String,
     isActive: { type: Boolean, default: true },
   })
 );
 
-const clientOptions = {
-  serverApi: { version: "1", strict: true, deprecationErrors: true },
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
-
 mongoose
-  .connect(uri, clientOptions)
+  .connect(uri)
   .then(() => console.log("Conectado ao MongoDB com sucesso!"))
   .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
 
@@ -85,12 +95,12 @@ app.post("/api/user", async (req, res) => {
   }
 });
 
-// Nova rota para atualizar a URL personalizada
-app.put("/api/user/custom-url", authMiddleware, async (req, res) => {
-  const { customUrl } = req.body;
+// Nova rota para criar um workspace
+app.post("/api/workspace", authMiddleware, async (req, res) => {
+  const { customUrl, name } = req.body;
 
-  if (!customUrl) {
-    return res.status(400).json({ message: "URL personalizada é obrigatória" });
+  if (!customUrl || !name) {
+    return res.status(400).json({ message: "URL personalizada e nome são obrigatórios" });
   }
 
   // Validar o formato da URL personalizada
@@ -101,25 +111,47 @@ app.put("/api/user/custom-url", authMiddleware, async (req, res) => {
 
   try {
     // Verificar se a URL já está em uso
-    const existingUser = await User.findOne({ customUrl });
-    if (existingUser && existingUser._id.toString() !== req.user._id.toString()) {
+    const existingWorkspace = await Workspace.findOne({ customUrl });
+    if (existingWorkspace) {
       return res.status(409).json({ message: "URL já está em uso" });
     }
 
-    // Atualizar a URL personalizada do usuário
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, { customUrl }, { new: true });
+    // Criar novo workspace
+    const newWorkspace = new Workspace({
+      userId: req.user._id,
+      customUrl,
+      name,
+    });
+    await newWorkspace.save();
 
-    res.json({ message: "URL personalizada atualizada com sucesso", user: updatedUser });
+    res.status(201).json({ message: "Workspace criado com sucesso", workspace: newWorkspace });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao atualizar URL personalizada", error: error.message });
+    res.status(500).json({ message: "Erro ao criar workspace", error: error.message });
   }
 });
 
-// Rota para adicionar um novo número (protegida)
+// Rota para listar workspaces do usuário
+app.get("/api/workspaces", authMiddleware, async (req, res) => {
+  try {
+    const workspaces = await Workspace.find({ userId: req.user._id });
+    res.json(workspaces);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao obter workspaces", error: error.message });
+  }
+});
+
+// Rota para adicionar um novo número (atualizada para usar workspaceId)
 app.post("/api/whatsapp", authMiddleware, async (req, res) => {
   try {
-    const { number, text } = req.body;
-    const newNumber = new WhatsappNumber({ userId: req.user._id, number, text });
+    const { workspaceId, number, text } = req.body;
+
+    // Verificar se o workspace pertence ao usuário
+    const workspace = await Workspace.findOne({ _id: workspaceId, userId: req.user._id });
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    const newNumber = new WhatsappNumber({ workspaceId, number, text });
     await newNumber.save();
     res.status(201).json(newNumber);
   } catch (error) {
@@ -127,27 +159,37 @@ app.post("/api/whatsapp", authMiddleware, async (req, res) => {
   }
 });
 
-// Rota para puxar todos os números do usuário (protegida)
-app.get("/api/whatsapp", authMiddleware, async (req, res) => {
+// Rota para puxar todos os números de um workspace específico
+app.get("/api/whatsapp/:workspaceId", authMiddleware, async (req, res) => {
   try {
-    const numbers = await WhatsappNumber.find({ userId: req.user._id });
+    const { workspaceId } = req.params;
+
+    // Verificar se o workspace pertence ao usuário
+    const workspace = await Workspace.findOne({ _id: workspaceId, userId: req.user._id });
+    if (!workspace) {
+      console.log("error");
+      return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    const numbers = await WhatsappNumber.find({ workspaceId });
     res.json(numbers);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: "Erro ao obter números", error: error.message });
   }
 });
 
-// Rota para redirecionamento baseado na URL personalizada
+// Rota para redirecionamento baseada na URL personalizada do workspace
 app.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
-    const user = await User.findOne({ customUrl });
+    const workspace = await Workspace.findOne({ customUrl });
 
-    if (!user) {
-      return res.status(404).json({ message: "Usuário não encontrado" });
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
-    const activeNumbers = await WhatsappNumber.find({ userId: user._id, isActive: true });
+    const activeNumbers = await WhatsappNumber.find({ workspaceId: workspace._id, isActive: true });
 
     if (activeNumbers.length === 0) {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
@@ -162,17 +204,25 @@ app.get("/:customUrl", async (req, res) => {
   }
 });
 
-// Rota para alternar o status de um número
+// Rota para alternar o status de um número (atualizada para verificar o workspace)
 app.put("/api/whatsapp/:numberId/toggle", authMiddleware, async (req, res) => {
   try {
     const { numberId } = req.params;
     const { isActive } = req.body;
 
-    const number = await WhatsappNumber.findOneAndUpdate({ _id: numberId, userId: req.user._id }, { isActive }, { new: true });
-
+    const number = await WhatsappNumber.findById(numberId);
     if (!number) {
       return res.status(404).json({ message: "Número não encontrado" });
     }
+
+    // Verificar se o workspace do número pertence ao usuário
+    const workspace = await Workspace.findOne({ _id: number.workspaceId, userId: req.user._id });
+    if (!workspace) {
+      return res.status(403).json({ message: "Acesso negado" });
+    }
+
+    number.isActive = isActive;
+    await number.save();
 
     res.json(number);
   } catch (error) {
@@ -180,16 +230,23 @@ app.put("/api/whatsapp/:numberId/toggle", authMiddleware, async (req, res) => {
   }
 });
 
-// Rota para deletar um número
+// Rota para deletar um número (atualizada para verificar o workspace)
 app.delete("/api/whatsapp/:numberId", authMiddleware, async (req, res) => {
   try {
     const { numberId } = req.params;
 
-    const number = await WhatsappNumber.findOneAndDelete({ _id: numberId, userId: req.user._id });
-
+    const number = await WhatsappNumber.findById(numberId);
     if (!number) {
       return res.status(404).json({ message: "Número não encontrado" });
     }
+
+    // Verificar se o workspace do número pertence ao usuário
+    const workspace = await Workspace.findOne({ _id: number.workspaceId, userId: req.user._id });
+    if (!workspace) {
+      return res.status(403).json({ message: "Acesso negado" });
+    }
+
+    await number.remove();
 
     res.json({ message: "Número deletado com sucesso" });
   } catch (error) {
