@@ -13,12 +13,12 @@ import { FiLogOut, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 
 // Configuração do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyALFUMro1Yyr1olR4FOLxYrsJ2hOmJCJnQ",
-  authDomain: "zapfy-b8baa.firebaseapp.com",
-  projectId: "zapfy-b8baa",
-  storageBucket: "zapfy-b8baa.firebasestorage.app",
-  messagingSenderId: "1052384737823",
-  appId: "1:1052384737823:web:6cae107fc616667eb1332a"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Inicialize o Firebase
@@ -516,7 +516,7 @@ const App: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle className='text-[28px] mb-4'>Confirmar Exclusão</DialogTitle>
                   <DialogDescription>
-                    <p className="mb-6 text-lg">
+                    <p className="mb-6 text-base text-justify">
                       Tem certeza que deseja deletar o workspace "{selectedWorkspace?.name}"?
                       Esta ação não pode ser desfeita.
                     </p>
