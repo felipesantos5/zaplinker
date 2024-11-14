@@ -62,7 +62,7 @@ const App: React.FC = () => {
   const [createWorkspace, setCreateWorkspace] = useState(false);
   const [isConfiguringWorkspace, setIsConfiguringWorkspace] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -88,7 +88,6 @@ const App: React.FC = () => {
   }, []);
 
   const fetchWorkspaces = async (userId: string) => {
-    setIsLoadingWorkspaces(true);
     try {
       const response = await axios.get<Workspace[]>(`${API_BASE_URL}/api/workspaces`, {
         headers: { 'Firebase-UID': userId }
