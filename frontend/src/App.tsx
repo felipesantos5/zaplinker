@@ -9,7 +9,8 @@ import { useToast } from './hooks/use-toast';
 import { Input } from './components/ui/input';
 import logo from './assets/zapfy-logo-white.png'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { FiLogOut, FiMoreVertical, FiTrash2 } from "react-icons/fi";
+import { FiExternalLink, FiLogOut, FiMoreVertical, FiTrash2 } from "react-icons/fi";
+import { Spinner } from './components/Spinner';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -61,6 +62,8 @@ const App: React.FC = () => {
   const [createWorkspace, setCreateWorkspace] = useState(false);
   const [isConfiguringWorkspace, setIsConfiguringWorkspace] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
+  const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -85,6 +88,7 @@ const App: React.FC = () => {
   }, []);
 
   const fetchWorkspaces = async (userId: string) => {
+    setIsLoadingWorkspaces(true);
     try {
       const response = await axios.get<Workspace[]>(`${API_BASE_URL}/api/workspaces`, {
         headers: { 'Firebase-UID': userId }
@@ -92,6 +96,8 @@ const App: React.FC = () => {
       setWorkspaces(response.data);
     } catch (error) {
       console.error('Erro ao buscar workspaces:', error);
+    } finally {
+      setIsLoadingWorkspaces(false);
     }
   };
 
@@ -136,6 +142,7 @@ const App: React.FC = () => {
   // NUMBER ROUTES
 
   const fetchNumbers = async (workspaceId: string) => {
+    setIsLoadingNumbers(true)
     try {
       const response = await axios.get<WhatsappNumber[]>(`${API_BASE_URL}/api/whatsapp/${workspaceId}`, {
         headers: { 'Firebase-UID': firebaseUser?.uid }
@@ -143,6 +150,8 @@ const App: React.FC = () => {
       setNumbers(response.data);
     } catch (error) {
       console.error('Erro ao buscar números:', error);
+    } finally {
+      setIsLoadingNumbers(false)
     }
   };
 
@@ -387,6 +396,11 @@ const App: React.FC = () => {
     fetchNumbers(workspace._id);
   };
 
+  const handleGoToHome = () => {
+    setIsConfiguring(false);
+    setSelectedWorkspace(null);
+  };
+
   if (!firebaseUser && !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -404,12 +418,12 @@ const App: React.FC = () => {
   return (
 
     //login
-    <div className='flex h-screen'>
-      <aside className="bg-zinc-900 pt-8 pb-12 max-w-[100px] px-3 rounded-full m-2">
-        <div className='flex h-full flex-col justify-between items-center'>
-          <a>
+    <div className='h-screen flex flex-col items-center md:flex-row'>
+      <aside className="bg-zinc-900 backdrop-blur-sm px-10 py-2 max-w-[90%] w-full m-auto my-2 md:m-2  rounded-full md:max-w-[100px] md:pt-8 md:pb-12 md:h-[95%] md:px-2 md:w-auto">
+        <div className='flex h-full items-center md:flex-col  justify-between'>
+          <button onClick={handleGoToHome}>
             <img className='w-9' src={logo} alt="" />
-          </a>
+          </button>
           <div className="flex items-center gap-6">
 
             <button
@@ -421,7 +435,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <main className="max-w-3xl w-full mx-auto mt-14 bg-white">
+      <main className="max-w-3xl w-full mx-auto mt-14 bg-white px-4">
 
         {/* criar workspace */}
         {createWorkspace &&
@@ -546,38 +560,44 @@ const App: React.FC = () => {
         {!isConfiguring ? (
           <section>
             <p className="text-black text-sm mb-2"><span className=''>Bem-vindo,</span>{firebaseUser?.displayName}</p>
-            <div className='flex justify-between mb-8'>
+            <div className='flex justify-between mb-16 flex-wrap gap-4'>
               <h2 className="text-5xl font-bold text-zinc-800">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
             </div>
-            <Table className='mt-10'>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className='w-[600px]'>Nome</TableHead>
-                  {/* <TableHead>URL Personalizada</TableHead> */}
-                  <TableHead className='text-center translate-x-6'>Entrar</TableHead>
-                  <TableHead className='text-right'>Editar</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {workspaces.map((workspace) => (
-                  <TableRow key={workspace._id}>
-                    <TableCell>{workspace.name}</TableCell>
-                    {/* <TableCell>{workspace.customUrl}</TableCell> */}
-                    <TableCell className='text-cente'>
-                      <Button onClick={() => handleSelectWorkspace(workspace)}>Acessar</Button>
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <button onClick={() => handleEditWorkSpace(workspace)}>
-                        <FiMoreVertical />
-                      </button>
-                    </TableCell>
-
-
+            {isLoadingWorkspaces ? (
+              <div className="flex justify-center items-center w-full h-full">
+                <Spinner />
+              </div>
+            ) : (
+              <Table className=''>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className='w-[75%]'>Nome</TableHead>
+                    {/* <TableHead>URL Personalizada</TableHead> */}
+                    <TableHead className='text-center'>Acessar</TableHead>
+                    <TableHead className='text-center'>Editar</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {workspaces.map((workspace) => (
+                    <TableRow key={workspace._id}>
+                      <TableCell>{workspace.name}</TableCell>
+                      {/* <TableCell>{workspace.customUrl}</TableCell> */}
+                      <TableCell className='text-center'>
+                        <button onClick={() => handleSelectWorkspace(workspace)}><FiExternalLink size={'18px'} /></button>
+                      </TableCell>
+                      <TableCell className='text-center'>
+                        <button onClick={() => handleEditWorkSpace(workspace)}>
+                          <FiMoreVertical />
+                        </button>
+                      </TableCell>
+
+
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </section>
         ) : (
           <div className=''>
@@ -590,9 +610,9 @@ const App: React.FC = () => {
 
             {selectedWorkspace && (
               <>
-                <section className='flex flex-col gap-16'>
+                <section className='flex flex-col'>
                   <form onSubmit={handleSubmit}>
-                    <h2 className="text-5xl font-bold text-zinc-800">{selectedWorkspace.name}</h2>
+                    <h2 className="text-5xl font-bold text-zinc-800 mb-16">{selectedWorkspace.name}</h2>
                     <div className="flex flex-col gap-4 mb-4 ">
 
                       <div className='flex flex-col gap-2'>
@@ -624,47 +644,55 @@ const App: React.FC = () => {
                     </Button>
                   </form>
 
-                  <div className=' border border-gray-200 p-4 rounded-xl mt-16'>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[250px]">Número</TableHead>
-                          <TableHead>Texto</TableHead>
-                          <TableHead className='text-right'>Status</TableHead>
-                          <TableHead className='text-right'>Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {numbers.map((num) => (
-                          <TableRow key={num._id}>
-                            <TableCell className="font-medium">{num.number}</TableCell>
-                            <TableCell>{num.text || 'Sem texto'}</TableCell>
-                            <TableCell className='text-right'>
-                              <Switch
-                                checked={num.isActive}
-                                onCheckedChange={() => toggleNumberStatus(num._id, num.isActive)}
-                              />
-                            </TableCell>
-                            <TableCell className='text-right pr-4'>
-                              <button
-                                onClick={() => deleteNumber(num._id)}
-                              >
-                                <FiTrash2 size={'20px'} />
-                              </button>
-                            </TableCell>
+                  <div className="border p-4 rounded-xl mt-6">
+                    <p className="font-semibold mb-2 text-zinc-700">URL personalizada do workspace:</p>
+                    <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} target="_blank" rel="noopener noreferrer" className="mt-2 block text-blue-500 hover:underline break-all">
+                      {`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
+                    </a>
+                  </div>
+
+                  <div className=' border border-gray-200 p-4 rounded-xl mt-10'>
+                    {isLoadingNumbers ? (
+                      <div className="flex justify-center items-center w-full h-full">
+                        <Spinner />
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[250px]">Número</TableHead>
+                            <TableHead>Texto</TableHead>
+                            <TableHead className='text-right'>Status</TableHead>
+                            <TableHead className='text-right'>Ações</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {numbers.map((num) => (
+                            <TableRow key={num._id}>
+                              <TableCell className="font-medium">{num.number}</TableCell>
+                              <TableCell>{num.text || 'Sem texto'}</TableCell>
+                              <TableCell className='text-right'>
+                                <Switch
+                                  checked={num.isActive}
+                                  onCheckedChange={() => toggleNumberStatus(num._id, num.isActive)}
+                                />
+                              </TableCell>
+                              <TableCell className='text-right pr-4'>
+                                <button
+                                  onClick={() => deleteNumber(num._id)}
+                                >
+                                  <FiTrash2 size={'20px'} />
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
                   </div>
                 </section>
 
-                <div className="mt-8">
-                  <p className="font-semibold mb-2 text-zinc-700">URL personalizada do workspace:</p>
-                  <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} target="_blank" rel="noopener noreferrer" className="mt-2 block text-blue-500 hover:underline break-all">
-                    {`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
-                  </a>
-                </div>
+
               </>
             )}
           </div>
