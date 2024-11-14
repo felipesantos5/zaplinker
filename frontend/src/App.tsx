@@ -124,7 +124,7 @@ const App: React.FC = () => {
       await signInWithPopup(auth, provider);
       toast({
         title: "Login realizado com sucesso",
-        description: new Date().toLocaleString(),
+
       });
     } catch (error) {
       console.error('Erro ao fazer login:', error);
@@ -135,7 +135,7 @@ const App: React.FC = () => {
     auth.signOut();
     toast({
       title: "Logout realizado com sucesso",
-      description: new Date().toLocaleString(),
+
     });
   };
 
@@ -185,7 +185,7 @@ const App: React.FC = () => {
       fetchNumbers(selectedWorkspace._id);
       toast({
         title: "Número adicionado com sucesso",
-        description: new Date().toLocaleString(),
+
       });
     } catch (error) {
       console.error('Erro ao adicionar número:', error);
@@ -263,9 +263,8 @@ const App: React.FC = () => {
         { name: newWorkspaceName, customUrl: newWorkspaceUrl },
         { headers: { 'Firebase-UID': firebaseUser.uid } }
       );
+      setCreateWorkspace(false)
       fetchWorkspaces(firebaseUser.uid);
-      setNewWorkspaceName('');
-      setNewWorkspaceUrl('');
       toast({
         title: response.data.message
       });
@@ -292,8 +291,8 @@ const App: React.FC = () => {
         });
       }
     }
-
-    setCreateWorkspace(false)
+    setNewWorkspaceName('');
+    setNewWorkspaceUrl('');
   };
 
   const handleUpdateWorkspace = async () => {
@@ -317,8 +316,8 @@ const App: React.FC = () => {
       fetchWorkspaces(firebaseUser.uid);
       toast({
         title: "Workspace atualizado com sucesso",
-        description: new Date().toLocaleString(),
       });
+      setIsConfiguringWorkspace(false)
     } catch (error: any) {
       if (error.response) {
         if (error.response.status === 409) {
@@ -342,7 +341,6 @@ const App: React.FC = () => {
         });
       }
     }
-    setIsConfiguringWorkspace(false)
   };
 
   const handleDeleteWorkspace = async () => {
@@ -368,7 +366,7 @@ const App: React.FC = () => {
       // Mostra toast de sucesso
       toast({
         title: "Workspace deletado com sucesso",
-        description: new Date().toLocaleString(),
+
       });
     } catch (error: any) {
       console.error('Erro ao deletar workspace:', error);
@@ -533,7 +531,7 @@ const App: React.FC = () => {
                         <Button
                           onClick={() => setIsConfirmingDelete(true)}
                           className='w-[50%] h-10'
-                          variant='destructive'
+                          variant={'outline'}
                         >
                           Deletar
                         </Button>
@@ -543,13 +541,13 @@ const App: React.FC = () => {
                 </>
               ) : (
                 <DialogHeader>
-                  <DialogTitle className='text-[28px] mb-4'>Confirmar Exclusão</DialogTitle>
+                  <DialogTitle className='text-[28px] mb-6'>Confirmar Exclusão</DialogTitle>
                   <DialogDescription>
-                    <p className="mb-6 text-base text-justify">
-                      Tem certeza que deseja deletar o workspace "{selectedWorkspace?.name}"?
-                      Esta ação não pode ser desfeita.
-                    </p>
-                    <div className='flex gap-4 justify-between items-center'>
+                    <p className="text-sm text-justify">
+                      Tem certeza que deseja deletar o workspace <strong className='text-base'>"{selectedWorkspace?.name}"</strong> ?</p>
+                    <p>Esta ação não pode ser desfeita.</p>
+
+                    <div className='flex gap-4 justify-between items-center mt-6'>
                       <Button
                         onClick={() => setIsConfirmingDelete(false)}
                         className='w-[50%] h-10'
