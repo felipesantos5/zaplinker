@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ firebaseUser, onSignOut }) => {
       <div className='flex justify-between items-center max-w-6xl m-auto'>
         <div className='flex gap-4 items-center  text-white'>
           <img className='w-10' src={logo} alt="" />
-          <h1 className="text-3xl font-bold">Zapfy</h1>
+          <h1 className="text-3xl font-bold"></h1>
         </div>
         <div className="flex items-center gap-6">
           <p className="text-white"> <span className=''>Bem-vindo,</span> {firebaseUser.displayName}</p>
