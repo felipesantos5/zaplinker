@@ -1,14 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-
-const uri = "mongodb+srv://zapfy:U7f4hDGJnTmZ6CB6@cluster0.qedku.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Modelo de Usuário atualizado
 const User = mongoose.model(
@@ -50,10 +49,17 @@ const WhatsappNumber = mongoose.model(
   })
 );
 
-mongoose
-  .connect(uri)
-  .then(() => console.log("Conectado ao MongoDB com sucesso!"))
-  .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("✅ Conexão com MongoDB estabelecida com sucesso!");
+  } catch (error) {
+    console.error("❌ Erro ao conectar com o MongoDB:", error.message);
+    process.exit(1);
+  }
+};
+
+connectDB();
 
 // Middleware de autenticação
 const authMiddleware = async (req, res, next) => {
