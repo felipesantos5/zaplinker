@@ -421,7 +421,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <main className="max-w-5xl mx-auto mt-14 bg-white">
+      <main className="max-w-3xl w-full mx-auto mt-14 bg-white">
 
         {/* criar workspace */}
         {createWorkspace &&
@@ -580,7 +580,7 @@ const App: React.FC = () => {
             </Table>
           </section>
         ) : (
-          <div className='w-6xl'>
+          <div className=''>
             <div className='flex items-center mb-4'>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 19L8 12L15 5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -590,8 +590,8 @@ const App: React.FC = () => {
 
             {selectedWorkspace && (
               <>
-                <section className='flex flex-col  gap-16 '>
-                  <form onSubmit={handleSubmit} className="">
+                <section className='flex flex-col gap-16'>
+                  <form onSubmit={handleSubmit}>
                     <h2 className="text-5xl font-bold text-zinc-800">{selectedWorkspace.name}</h2>
                     <div className="flex flex-col gap-4 mb-4 ">
 
@@ -624,7 +624,7 @@ const App: React.FC = () => {
                     </Button>
                   </form>
 
-                  <div className='max-w-[100%] w-full border border-gray-200 p-4 rounded-xl mt-16'>
+                  <div className=' border border-gray-200 p-4 rounded-xl mt-16'>
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -645,7 +645,7 @@ const App: React.FC = () => {
                                 onCheckedChange={() => toggleNumberStatus(num._id, num.isActive)}
                               />
                             </TableCell>
-                            <TableCell className='text-center'>
+                            <TableCell className='text-right pr-4'>
                               <button
                                 onClick={() => deleteNumber(num._id)}
                               >
