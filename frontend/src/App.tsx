@@ -659,12 +659,12 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* <div className="mt-8">
+                <div className="mt-8">
                   <p className="font-semibold mb-2 text-zinc-700">URL personalizada do workspace:</p>
                   <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} target="_blank" rel="noopener noreferrer" className="mt-2 block text-blue-500 hover:underline break-all">
                     {`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
                   </a>
-                </div> */}
+                </div>
               </>
             )}
           </div>
