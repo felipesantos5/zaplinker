@@ -269,13 +269,28 @@ const App: React.FC = () => {
       toast({
         title: response.data.message
       });
-    } catch (error) {
-      console.error('Erro ao criar workspace:', error);
-      toast({
-        title: "Erro ao criar workspace",
-        description: "Não foi possível criar o workspace. Tente novamente.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      if (error.response) {
+        if (error.response.status === 409) {
+          toast({
+            title: "Erro ao criar o workspace",
+            description: "Esta URL personalizada já está sendo utilizada. Escolha uma URL diferente.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro ao atualizar workspace",
+            description: error.response.data.message || "Não foi possível criar o workspace. Tente novamente.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Erro ao criar workspace",
+          description: "Não foi possível criar o workspace. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     }
 
     setCreateWorkspace(false)
@@ -418,8 +433,8 @@ const App: React.FC = () => {
   return (
 
     //login
-    <div className='h-screen flex flex-col items-center md:flex-row'>
-      <aside className="bg-zinc-900 backdrop-blur-sm px-10 py-2 max-w-[90%] w-full m-auto my-2 md:m-2  rounded-full md:max-w-[100px] md:pt-8 md:pb-12 md:h-[95%] md:px-2 md:w-auto">
+    <div className='h-screen flex flex-col items-baseline md:flex-row '>
+      <aside className="bg-zinc-900 backdrop-blur-sm px-10 py-2 max-w-[90%] w-full m-auto my-2 md:mx-2  rounded-full md:max-w-[100px] md:pt-8 md:pb-12 md:h-[95%] md:px-2 md:w-auto md:my-auto">
         <div className='flex h-full items-center md:flex-col  justify-between'>
           <button onClick={handleGoToHome}>
             <img className='w-9' src={logo} alt="" />
@@ -560,8 +575,8 @@ const App: React.FC = () => {
         {!isConfiguring ? (
           <section>
             <p className="text-black text-sm mb-2"><span className=''>Bem-vindo,</span>{firebaseUser?.displayName}</p>
-            <div className='flex justify-between mb-16 flex-wrap gap-4'>
-              <h2 className="text-5xl font-bold text-zinc-800">Workspaces</h2>
+            <div className='flex justify-between flex-wrap gap-4 mb-8 md:mb-16'>
+              <h2 className="text-4xl md:text-5xl font-bold text-zinc-800">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
             </div>
             {isLoadingWorkspaces ? (
@@ -638,7 +653,7 @@ const App: React.FC = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full bg-zinc-800 text-white"
+                      className="w-full bg-zinc-800 text-white h-10"
                     >
                       Adicionar
                     </Button>
