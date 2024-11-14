@@ -200,6 +200,38 @@ app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// Rota para deletar um workspace
+app.delete("/api/workspace/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar se o workspace pertence ao usuário
+    const workspace = await Workspace.findOne({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    // Deletar todos os números de WhatsApp associados ao workspace
+    await WhatsappNumber.deleteMany({ workspaceId: id });
+
+    // Deletar o workspace
+    await Workspace.deleteOne({ _id: id });
+
+    res.json({
+      message: "Workspace deletado com sucesso",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Erro ao deletar workspace",
+      error: error.message,
+    });
+  }
+});
+
 // Rota para adicionar um novo número (atualizada para usar workspaceId)
 app.post("/api/whatsapp", authMiddleware, async (req, res) => {
   try {
