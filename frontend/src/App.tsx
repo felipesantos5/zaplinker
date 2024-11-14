@@ -60,6 +60,7 @@ const App: React.FC = () => {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [createWorkspace, setCreateWorkspace] = useState(false);
   const [isConfiguringWorkspace, setIsConfiguringWorkspace] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -228,7 +229,7 @@ const App: React.FC = () => {
     }
   };
 
-  // WORKSPACE LOGICS
+  // WORKSPACE ROUTES
 
   const validateCustomUrl = (url: string) => {
     const urlRegex = /^[a-zA-Z0-9_-]+$/;
@@ -257,8 +258,7 @@ const App: React.FC = () => {
       setNewWorkspaceName('');
       setNewWorkspaceUrl('');
       toast({
-        title: "Workspace criado com sucesso",
-        description: new Date().toLocaleString(),
+        title: response.data.message
       });
     } catch (error) {
       console.error('Erro ao criar workspace:', error);
@@ -321,6 +321,60 @@ const App: React.FC = () => {
     setIsConfiguringWorkspace(false)
   };
 
+  const handleDeleteWorkspace = async () => {
+    if (!firebaseUser || !selectedWorkspace) return;
+
+    try {
+      // Faz a requisição para deletar o workspace
+      await axios.delete(`${API_BASE_URL}/api/workspace/${selectedWorkspace._id}`, {
+        headers: { 'Firebase-UID': firebaseUser.uid }
+      });
+
+      // Atualiza a lista de workspaces
+      fetchWorkspaces(firebaseUser.uid);
+
+      // Limpa o workspace selecionado
+      setSelectedWorkspace(null);
+
+      // Fecha qualquer modal ou dropdown de confirmação, se necessário
+      setIsConfiguringWorkspace(false);
+
+      setIsConfirmingDelete(false)
+
+      // Mostra toast de sucesso
+      toast({
+        title: "Workspace deletado com sucesso",
+        description: new Date().toLocaleString(),
+      });
+    } catch (error: any) {
+      console.error('Erro ao deletar workspace:', error);
+
+      // Tratamento de erro mais específico
+      if (error.response) {
+        // Erro de resposta do servidor
+        toast({
+          title: "Erro ao deletar workspace",
+          description: error.response.data.message || "Não foi possível deletar o workspace. Tente novamente.",
+          variant: "destructive",
+        });
+      } else if (error.request) {
+        // Erro de conexão
+        toast({
+          title: "Erro de conexão",
+          description: "Não foi possível conectar ao servidor. Verifique sua conexão.",
+          variant: "destructive",
+        });
+      } else {
+        // Erro genérico
+        toast({
+          title: "Erro ao deletar workspace",
+          description: "Não foi possível deletar o workspace. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleSelectWorkspace = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setIsConfiguring(true);
@@ -333,7 +387,7 @@ const App: React.FC = () => {
     fetchNumbers(workspace._id);
   };
 
-  if (!firebaseUser) {
+  if (!firebaseUser && !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <h1 className="text-4xl font-bold mb-8 text-zinc-900">Zapfy</h1>
@@ -396,63 +450,102 @@ const App: React.FC = () => {
         }
 
         {/* editar workspace */}
-        {isConfiguringWorkspace &&
+        {isConfiguringWorkspace && (
           <Dialog open={isConfiguringWorkspace} onOpenChange={setIsConfiguringWorkspace}>
             <DialogContent className='p-12 w-[1600px]'>
-              <DialogHeader>
-                <DialogTitle className='text-[28px] mb-10'>Editar Workspace</DialogTitle>
-                <DialogDescription>
-                  <section className="">
-                    <div className="flex flex-col gap-2 mb-4">
-                      <div className='mb-2 flex flex-col gap-2'>
-                        <label htmlFor="">Nome do workspace</label>
-                        <Input
-                          type="text"
-                          value={selectedWorkspace?.name || ''}
-                          onChange={(e) => {
-                            if (selectedWorkspace) {
-                              setSelectedWorkspace({
-                                ...selectedWorkspace,
-                                name: e.target.value
-                              });
-                            }
-                          }}
-                          placeholder="Nome do workspace"
-                        />
+              {!isConfirmingDelete ? (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className='text-[28px] mb-10'>Editar Workspace</DialogTitle>
+                    <DialogDescription>
+                      <section className="">
+                        <div className="flex flex-col gap-2 mb-4">
+                          <div className='mb-2 flex flex-col gap-2'>
+                            <label htmlFor="">Nome do workspace</label>
+                            <Input
+                              type="text"
+                              value={selectedWorkspace?.name || ''}
+                              onChange={(e) => {
+                                if (selectedWorkspace) {
+                                  setSelectedWorkspace({
+                                    ...selectedWorkspace,
+                                    name: e.target.value
+                                  });
+                                }
+                              }}
+                              placeholder="Nome do workspace"
+                            />
+                          </div>
+                          <div className='mb-8 flex flex-col gap-2'>
+                            <label htmlFor="">Url personalizada</label>
+                            <Input
+                              type="text"
+                              value={selectedWorkspace?.customUrl || ''}
+                              onChange={(e) => {
+                                if (selectedWorkspace) {
+                                  setSelectedWorkspace({
+                                    ...selectedWorkspace,
+                                    customUrl: e.target.value
+                                  });
+                                }
+                              }}
+                              placeholder="URL personalizada"
+                            />
+                          </div>
+                        </div>
+                      </section>
+                      <div className='flex gap-4 justify-between items-center'>
+                        <Button
+                          onClick={handleUpdateWorkspace}
+                          className='w-[50%] h-10'
+                        >
+                          Atualizar
+                        </Button>
+                        <Button
+                          onClick={() => setIsConfirmingDelete(true)}
+                          className='w-[50%] h-10'
+                          variant='destructive'
+                        >
+                          Deletar
+                        </Button>
                       </div>
-                      <div className='mb-8 flex flex-col gap-2'>
-                        <label htmlFor="">Url personalizada</label>
-                        <Input
-                          type="text"
-                          value={selectedWorkspace?.customUrl || ''}
-                          onChange={(e) => {
-                            if (selectedWorkspace) {
-                              setSelectedWorkspace({
-                                ...selectedWorkspace,
-                                customUrl: e.target.value
-                              });
-                            }
-                          }}
-                          placeholder="URL personalizada"
-                        />
-                      </div>
-
-
+                    </DialogDescription>
+                  </DialogHeader>
+                </>
+              ) : (
+                <DialogHeader>
+                  <DialogTitle className='text-[28px] mb-4'>Confirmar Exclusão</DialogTitle>
+                  <DialogDescription>
+                    <p className="mb-6 text-lg">
+                      Tem certeza que deseja deletar o workspace "{selectedWorkspace?.name}"?
+                      Esta ação não pode ser desfeita.
+                    </p>
+                    <div className='flex gap-4 justify-between items-center'>
+                      <Button
+                        onClick={() => setIsConfirmingDelete(false)}
+                        className='w-[50%] h-10'
+                        variant='outline'
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleDeleteWorkspace}
+                        className='w-[50%] h-10'
+                        variant='destructive'
+                      >
+                        Confirmar Exclusão
+                      </Button>
                     </div>
-                  </section>
-                  <div className='flex gap-4 justify-between items-center'>
-                    <Button onClick={handleUpdateWorkspace} className='w-[50%] h-10' >Atualizar</Button>
-                    <Button onClick={() => setIsConfiguringWorkspace(false)} className='w-[50%]' variant='outline'  >Deletar</Button>
-                  </div>
-                </DialogDescription>
-              </DialogHeader>
+                  </DialogDescription>
+                </DialogHeader>
+              )}
             </DialogContent>
           </Dialog>
-        }
+        )}
 
         {!isConfiguring ? (
           <section>
-            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo,</span>{firebaseUser.displayName}</p>
+            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo,</span>{firebaseUser?.displayName}</p>
             <div className='flex justify-between mb-8'>
               <h2 className="text-5xl font-bold text-zinc-800">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
