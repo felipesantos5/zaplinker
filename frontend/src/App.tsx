@@ -47,9 +47,6 @@ interface User {
   photoURL?: string;
 }
 
-// Constantes
-const API_BASE_URL = 'http://localhost:5000';
-
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -63,6 +60,8 @@ const App: React.FC = () => {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [createWorkspace, setCreateWorkspace] = useState(false);
   const [isConfiguringWorkspace, setIsConfiguringWorkspace] = useState(false);
+
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const { toast } = useToast();
 
@@ -111,8 +110,6 @@ const App: React.FC = () => {
       throw error;
     }
   };
-
-
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
