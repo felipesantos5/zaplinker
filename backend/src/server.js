@@ -280,14 +280,21 @@ app.get("/:customUrl", async (req, res) => {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
-    const activeNumbers = await WhatsappNumber.find({ workspaceId: workspace._id, isActive: true });
+    const activeNumbers = await WhatsappNumber.find({
+      workspaceId: workspace._id,
+      isActive: true,
+    });
 
     if (activeNumbers.length === 0) {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
-    const whatsappUrl = `http://wa.me/${randomNumber.number}?force=true`;
+
+    // Verifica se o número tem um texto personalizado
+    const text = randomNumber.text ? encodeURIComponent(randomNumber.text) : "";
+
+    const whatsappUrl = text ? `http://wa.me/${randomNumber.number}?text=${text}&force=true` : `http://wa.me/${randomNumber.number}?force=true`;
 
     res.redirect(whatsappUrl);
   } catch (error) {
