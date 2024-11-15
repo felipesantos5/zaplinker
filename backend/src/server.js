@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const { kMaxLength } = require("buffer");
 require("dotenv").config();
 
 const app = express();
@@ -32,7 +33,8 @@ const Workspace = mongoose.model(
   new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     customUrl: { type: String, unique: true, required: true },
-    name: { type: String, required: true },
+    name: { type: String, required: true, maxlength: [50, "A URL personalizada deve ter no máximo 50 caracteres."] },
+    accessCount: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
   })
 );
@@ -45,6 +47,7 @@ const WhatsappNumber = mongoose.model(
     number: { type: String, required: true },
     text: String,
     isActive: { type: Boolean, default: true },
+    accessCount: { type: Number, default: 0 },
   })
 );
 
@@ -106,6 +109,13 @@ app.post("/api/workspace", authMiddleware, async (req, res) => {
 
   if (!customUrl || !name) {
     return res.status(400).json({ message: "URL personalizada e nome são obrigatórios" });
+  }
+
+  if (name.length > 25) {
+    return res.status(400).json({ message: "Nome do workspace invalido, maximo de 25 caracteres" });
+  }
+  if (customUrl.length > 35) {
+    return res.status(400).json({ message: "URL personalizada invalido, maximo de 30 caracteres" });
   }
 
   // Validar o formato da URL personalizada
@@ -231,6 +241,39 @@ app.delete("/api/workspace/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// rota para puxar informação do workspace
+app.get("/api/workspaces/:id/stats", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const workspace = await Workspace.findById(id);
+
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    res.json({ accessCount: workspace.accessCount });
+  } catch (error) {
+    res.status(500).json({ message: "Erro no servidor", error: error.message });
+  }
+});
+
+// Endpoint para recuperar acessos por número
+app.get("/api/workspaces/:id/numbers/stats", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const numbers = await WhatsappNumber.find({ workspaceId: id });
+
+    const stats = numbers.map((number) => ({
+      number: number.number,
+      accessCount: number.accessCount,
+    }));
+
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ message: "Erro no servidor", error: error.message });
+  }
+});
+
 // Rota para adicionar um novo número (atualizada para usar workspaceId)
 app.post("/api/whatsapp", authMiddleware, async (req, res) => {
   try {
@@ -291,7 +334,11 @@ app.get("/:customUrl", async (req, res) => {
 
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
 
-    // Verifica se o número tem um texto personalizado
+    // Incrementa a contagem de acessos para este número
+    await WhatsappNumber.findByIdAndUpdate(randomNumber._id, {
+      $inc: { accessCount: 1 },
+    });
+
     const text = randomNumber.text ? encodeURIComponent(randomNumber.text) : "";
 
     const whatsappUrl = text ? `http://wa.me/${randomNumber.number}?text=${text}&force=true` : `http://wa.me/${randomNumber.number}?force=true`;
