@@ -166,6 +166,13 @@ app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Nome e URL personalizada são obrigatórios" });
     }
 
+    if (name.length > 25) {
+      return res.status(400).json({ message: "Nome do workspace invalido, maximo de 25 caracteres" });
+    }
+    if (customUrl.length > 35) {
+      return res.status(400).json({ message: "URL personalizada invalido, maximo de 30 caracteres" });
+    }
+
     // Validar o formato da URL personalizada
     const urlRegex = /^[a-zA-Z0-9_-]+$/;
     if (!urlRegex.test(customUrl)) {
