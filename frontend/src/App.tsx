@@ -749,20 +749,16 @@ const App: React.FC = () => {
 
                       {workspaceStats && (
 
-                        <div className='flex flex-col justify-between md:flex-row'>
-                          <div>
-                            <h3 className="text-xl font-bold">Estatísticas do Workspace</h3>
-                            <p>Total de acessos: {workspaceStats.accessCount}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold mt-8 mb-4">Estatísticas dos Números</h4>
-                            <BarChart width={300} height={150} data={selectedWorkspaceStats?.numberStats}>
-                              <XAxis dataKey="number" />
-                              <YAxis />
-                              <Tooltip />
-                              <Bar dataKey="accessCount" fill="#8884d8" />
-                            </BarChart>
-                          </div>
+                        <div className='flex flex-col justify-between'>
+                          <h3 className="text-xl font-bold mb-4">Estatísticas do Workspace</h3>
+                          <p className='mb-2'>Total de acessos: {workspaceStats.accessCount}</p>
+                          <BarChart width={500} height={150} data={selectedWorkspaceStats?.numberStats}>
+                            <XAxis dataKey="number" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="accessCount" fill="#8884d8" />
+                          </BarChart>
+
                         </div>
                       )}
                     </div>
