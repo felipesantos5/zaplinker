@@ -11,6 +11,7 @@ import logo from './assets/zapfy-logo-white.png'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
 import { FiExternalLink, FiLogOut, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 import { Spinner } from './components/Spinner';
+import { XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -65,6 +66,12 @@ const App: React.FC = () => {
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
 
+  const [workspaceStats, setWorkspaceStats] = useState<{ accessCount: number } | null>(null);
+  const [numberStats, setNumberStats] = useState<{ number: string; accessCount: number }[]>([]);
+  const [selectedWorkspaceStats, setSelectedWorkspaceStats] = useState<{ accessCount: number, numberStats: { number: string, accessCount: number }[] } | null>(null);
+
+
+
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const { toast } = useToast();
@@ -86,6 +93,18 @@ const App: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (selectedWorkspace) {
+      axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/stats`)
+        .then(response => setWorkspaceStats(response.data))
+        .catch(error => console.error("Erro ao buscar estatísticas do workspace:", error));
+
+      axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/numbers/stats`)
+        .then(response => setNumberStats(response.data))
+        .catch(error => console.error("Erro ao buscar estatísticas dos números:", error));
+    }
+  }, [selectedWorkspace]);
 
   const fetchWorkspaces = async (userId: string) => {
     try {
@@ -400,6 +419,7 @@ const App: React.FC = () => {
     setSelectedWorkspace(workspace);
     setIsConfiguring(true);
     fetchNumbers(workspace._id);
+    fetchWorkspaceStats(workspace._id);
   };
 
   const handleEditWorkSpace = (workspace: Workspace) => {
@@ -411,6 +431,27 @@ const App: React.FC = () => {
   const handleGoToHome = () => {
     setIsConfiguring(false);
     setSelectedWorkspace(null);
+  };
+
+  // WORK SPACE STATUS DASH BOARD
+  const fetchWorkspaceStats = async (workspaceId: string) => {
+    try {
+      const [workspaceResponse, numbersResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/workspaces/${workspaceId}/stats`),
+        axios.get(`${API_BASE_URL}/api/workspaces/${workspaceId}/numbers/stats`)
+      ]);
+
+      setSelectedWorkspaceStats({
+        accessCount: workspaceResponse.data.accessCount,
+        numberStats: numbersResponse.data
+      });
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas do workspace:', error);
+    }
+  };
+
+  const handleViewStats = (workspace: Workspace) => {
+    fetchWorkspaceStats(workspace._id);
   };
 
   if (!firebaseUser && !user) {
@@ -571,7 +612,7 @@ const App: React.FC = () => {
 
         {!isConfiguring ? (
           <section>
-            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo,</span>{firebaseUser?.displayName}</p>
+            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo, </span>{firebaseUser?.displayName}</p>
             <div className='flex justify-between flex-wrap gap-4 mb-8 md:mb-16'>
               <h2 className="text-4xl md:text-5xl font-bold text-zinc-800">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
@@ -585,16 +626,15 @@ const App: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className='w-[75%]'>Nome</TableHead>
-                    {/* <TableHead>URL Personalizada</TableHead> */}
                     <TableHead className='text-center'>Acessar</TableHead>
                     <TableHead className='text-center'>Editar</TableHead>
+                    <TableHead className='text-center'>Detalhes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {workspaces.map((workspace) => (
                     <TableRow key={workspace._id}>
-                      <TableCell>{workspace.name}</TableCell>
-                      {/* <TableCell>{workspace.customUrl}</TableCell> */}
+                      <TableCell className='capitalize'>{workspace.name}</TableCell>
                       <TableCell className='text-center'>
                         <button onClick={() => handleSelectWorkspace(workspace)}><FiExternalLink size={'18px'} /></button>
                       </TableCell>
@@ -603,7 +643,9 @@ const App: React.FC = () => {
                           <FiMoreVertical />
                         </button>
                       </TableCell>
-
+                      <TableCell className='text-center'>
+                        <button onClick={() => handleViewStats(workspace)}>Ver Detalhes</button>
+                      </TableCell>
 
                     </TableRow>
                   ))}
@@ -624,9 +666,8 @@ const App: React.FC = () => {
               <>
                 <section className='flex flex-col'>
                   <form onSubmit={handleSubmit}>
-                    <h2 className="text-5xl font-bold text-zinc-800 mb-16">{selectedWorkspace.name}</h2>
-                    <div className="flex flex-col gap-4 mb-4 ">
-
+                    <h2 className="text-5xl font-bold text-zinc-800 mb-16 capitalize">{selectedWorkspace.name}</h2>
+                    <div className="flex flex-col gap-4 mb-4">
                       <div className='flex flex-col gap-2'>
                         <label htmlFor="">Número <span className='text-xs'>*</span></label>
                         <Input
@@ -702,6 +743,31 @@ const App: React.FC = () => {
                       </Table>
                     )}
                   </div>
+
+                  <section className=''>
+                    <div className="mt-8">
+
+                      {workspaceStats && (
+
+                        <div className='flex flex-col justify-between md:flex-row'>
+                          <div>
+                            <h3 className="text-xl font-bold">Estatísticas do Workspace</h3>
+                            <p>Total de acessos: {workspaceStats.accessCount}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-bold mt-8 mb-4">Estatísticas dos Números</h4>
+                            <BarChart width={300} height={150} data={selectedWorkspaceStats?.numberStats}>
+                              <XAxis dataKey="number" />
+                              <YAxis />
+                              <Tooltip />
+                              <Bar dataKey="accessCount" fill="#8884d8" />
+                            </BarChart>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
                 </section>
 
 
@@ -709,6 +775,9 @@ const App: React.FC = () => {
             )}
           </div>
         )}
+
+
+
       </main >
     </div>
   );
