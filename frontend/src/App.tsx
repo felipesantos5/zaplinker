@@ -74,6 +74,8 @@ const App: React.FC = () => {
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
+  console.log(numberStats)
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -622,19 +624,23 @@ const App: React.FC = () => {
                 <Spinner />
               </div>
             ) : (
+
               <Table className=''>
+
                 <TableHeader>
                   <TableRow>
+
                     <TableHead className='w-[75%]'>Nome</TableHead>
                     <TableHead className='text-center'>Acessar</TableHead>
                     <TableHead className='text-center'>Editar</TableHead>
                     <TableHead className='text-center'>Detalhes</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {workspaces.map((workspace) => (
+
+                {workspaces.map((workspace) => (
+                  <TableBody>
                     <TableRow key={workspace._id}>
-                      <TableCell className='capitalize'>{workspace.name}</TableCell>
+                      <TableCell className='capitalize'><button onClick={() => handleSelectWorkspace(workspace)}>{workspace.name}</button></TableCell>
                       <TableCell className='text-center'>
                         <button onClick={() => handleSelectWorkspace(workspace)}><FiExternalLink size={'18px'} /></button>
                       </TableCell>
@@ -648,8 +654,9 @@ const App: React.FC = () => {
                       </TableCell>
 
                     </TableRow>
-                  ))}
-                </TableBody>
+                  </TableBody>
+                ))}
+
               </Table>
             )}
           </section>
@@ -746,9 +753,7 @@ const App: React.FC = () => {
 
                   <section className=''>
                     <div className="mt-8">
-
                       {workspaceStats && (
-
                         <div className='flex flex-col justify-between'>
                           <h3 className="text-xl font-bold mb-4">Estatísticas do Workspace</h3>
                           <p className='mb-2'>Total de acessos: {workspaceStats.accessCount}</p>
@@ -758,7 +763,6 @@ const App: React.FC = () => {
                             <Tooltip />
                             <Bar dataKey="accessCount" fill="#8884d8" />
                           </BarChart>
-
                         </div>
                       )}
                     </div>
