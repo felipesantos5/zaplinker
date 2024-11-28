@@ -472,9 +472,9 @@ const App: React.FC = () => {
 
   if (!firebaseUser && !user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white w-full">
         <div className='max-w-4xl m-auto'>
-          <h1 className="text-4xl font-bold mb-8 text-zinc-900">Zapfy</h1>
+          <h1 className="text-4xl font-bold mb-8 text-zinc-900 text-center">Zapfy</h1>
           <Button
             onClick={signInWithGoogle}
             className="bg-zinc-800 text-white"
