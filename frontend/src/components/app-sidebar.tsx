@@ -10,10 +10,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import useAuth from "../hooks/useAuth";
+
+interface AppSidebarProps {
+  logout: () => void;
+}
 
 // Menu items.
 const items = [
@@ -44,8 +46,7 @@ const items = [
   },
 ]
 
-export function AppSidebar() {
-  const { logout } = useAuth();
+export function AppSidebar(props: AppSidebarProps) {
 
   return (
     <Sidebar>
@@ -88,8 +89,8 @@ export function AppSidebar() {
                 <DropdownMenuItem>
                   <span>Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span onClick={logout}>Sign out</span>
+                <DropdownMenuItem onClick={props.logout}>
+                  <span >Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

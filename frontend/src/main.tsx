@@ -8,9 +8,11 @@ import { SidebarProvider } from './components/ui/sidebar.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <SidebarProvider>
-      <App />
-      <Toaster />
-    </SidebarProvider>
+    <main>
+      <SidebarProvider className='w-full'>
+        <App />
+        <Toaster />
+      </SidebarProvider>
+    </main>
   </React.StrictMode>,
 )

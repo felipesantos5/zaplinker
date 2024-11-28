@@ -7,11 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Switch } from './components/ui/switch';
 import { useToast } from './hooks/use-toast';
 import { Input } from './components/ui/input';
-import logo from './assets/zapfy-logo-white.png'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { FiExternalLink, FiLogOut, FiMoreVertical, FiTrash2 } from "react-icons/fi";
+import { FiExternalLink, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 import { Spinner } from './components/Spinner';
 import { XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
+import { AppSidebar } from './components/app-sidebar';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -65,18 +65,17 @@ const App: React.FC = () => {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const [workspaceStats, setWorkspaceStats] = useState<{ accessCount: number } | null>(null);
   const [numberStats, setNumberStats] = useState<{ number: string; accessCount: number }[]>([]);
   const [selectedWorkspaceStats, setSelectedWorkspaceStats] = useState<{ accessCount: number, numberStats: { number: string, accessCount: number }[] } | null>(null);
 
-
-
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-  console.log(numberStats)
-
   const { toast } = useToast();
+
+  console.log(numberStats)
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (fbUser) => {
@@ -105,7 +104,12 @@ const App: React.FC = () => {
       axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/numbers/stats`)
         .then(response => setNumberStats(response.data))
         .catch(error => console.error("Erro ao buscar estatísticas dos números:", error));
+      axios.get(`${API_BASE_URL}/api/workspace/:id/qrcode`)
+        .then(response => setNumberStats(response.data))
+        .catch(error => console.error("Erro ao buscar o qr code", error));
     }
+
+
   }, [selectedWorkspace]);
 
   const fetchWorkspaces = async (userId: string) => {
@@ -422,17 +426,13 @@ const App: React.FC = () => {
     setIsConfiguring(true);
     fetchNumbers(workspace._id);
     fetchWorkspaceStats(workspace._id);
+    fetchQrCode(workspace._id);
   };
 
   const handleEditWorkSpace = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setIsConfiguringWorkspace(true);
     fetchNumbers(workspace._id);
-  };
-
-  const handleGoToHome = () => {
-    setIsConfiguring(false);
-    setSelectedWorkspace(null);
   };
 
   // WORK SPACE STATUS DASH BOARD
@@ -456,16 +456,32 @@ const App: React.FC = () => {
     fetchWorkspaceStats(workspace._id);
   };
 
+  // QR CODE
+
+  const fetchQrCode = async (workspaceId: string) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/workspace/${workspaceId}/qrcode`, {
+        headers: { 'Firebase-UID': firebaseUser?.uid }
+      });
+      setQrCodeUrl(response.data.qrCodeDataUrl);
+    } catch (error) {
+      console.error('Erro ao buscar QR Code:', error);
+    }
+    console.log(setQrCodeUrl)
+  };
+
   if (!firebaseUser && !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <h1 className="text-4xl font-bold mb-8 text-zinc-900">Zapfy</h1>
-        <Button
-          onClick={signInWithGoogle}
-          className="bg-zinc-800 text-white"
-        >
-          Entrar com Google
-        </Button>
+        <div className='max-w-4xl m-auto'>
+          <h1 className="text-4xl font-bold mb-8 text-zinc-900">Zapfy</h1>
+          <Button
+            onClick={signInWithGoogle}
+            className="bg-zinc-800 text-white"
+          >
+            Entrar com Google
+          </Button>
+        </div>
       </div>
     );
   }
@@ -473,24 +489,11 @@ const App: React.FC = () => {
   return (
 
     //login
-    <div className='h-screen flex flex-col items-baseline md:flex-row '>
-      <aside className="bg-zinc-900 backdrop-blur-sm px-10 py-2 max-w-[90%] w-full m-auto my-2 md:mx-2  rounded-full md:max-w-[100px] md:pt-8 md:pb-12 md:h-[95%] md:px-2 md:w-auto md:my-auto">
-        <div className='flex h-full items-center md:flex-col  justify-between'>
-          <button onClick={handleGoToHome}>
-            <img className='w-9' src={logo} alt="" />
-          </button>
-          <div className="flex items-center gap-6">
+    <div className='flex justify-between w-full'>
+      <AppSidebar logout={signOut} />
 
-            <button
-              onClick={signOut}
-            >
-              <FiLogOut color='white' size={'20px'} />
-            </button>
-          </div>
-        </div>
-      </aside>
 
-      <main className="max-w-3xl w-full mx-auto mt-14 bg-white px-4">
+      <main className="max-w-5xl w-full mx-auto mt-14 bg-white px-4">
 
         {/* criar workspace */}
         {createWorkspace &&
@@ -765,6 +768,11 @@ const App: React.FC = () => {
                           </BarChart>
                         </div>
                       )}
+
+                      <div className="mt-8">
+                        <h3 className="text-xl font-bold">QR Code do Workspace</h3>
+                        <img src={qrCodeUrl ?? ""} alt="QR Code" />
+                      </div>
                     </div>
                   </section>
 
