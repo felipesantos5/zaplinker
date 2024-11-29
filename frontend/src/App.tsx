@@ -99,8 +99,6 @@ const App: React.FC = () => {
         .then(response => setNumberStats(response.data))
         .catch(error => console.error("Erro ao buscar o qr code", error));
     }
-
-
   }, [selectedWorkspace]);
 
   const fetchWorkspaces = async (userId: string) => {
@@ -516,7 +514,7 @@ const App: React.FC = () => {
               >
                 Entrar
               </Button>
-              <a href="/registro" className='text-zinc-400 tracking-tight mt-1'>Não possui conta? <span className='font-semibold hover:underline'>Registre-se</span></a>
+              <a href="/registrar" className='text-zinc-400 tracking-tight mt-1'>Não possui conta? <span className='font-semibold hover:underline'>Registre-se</span></a>
             </div>
           </div>
 
