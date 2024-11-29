@@ -17,14 +17,8 @@ const User = mongoose.model(
     firebaseUid: { type: String, required: true, unique: true },
     email: { type: String, required: true },
     displayName: String,
-    photoURL: String,
     createdAt: { type: Date, default: Date.now },
-    personalHash: {
-      type: String,
-      unique: true,
-      sparse: true,
-      default: null,
-    },
+    personalHash: { type: Date, default: Date.now },
   })
 );
 
@@ -83,7 +77,9 @@ const authMiddleware = async (req, res, next) => {
 
 // Rota para criar ou atualizar usuário após login com Firebase
 app.post("/api/user", async (req, res) => {
-  const { firebaseUid, email, displayName, photoURL } = req.body;
+  const { firebaseUid, email, displayName } = req.body;
+
+  console.log("Received UID:", firebaseUid); // Debug
 
   try {
     let user = await User.findOne({ firebaseUid });
@@ -91,15 +87,17 @@ app.post("/api/user", async (req, res) => {
       // Atualiza o usuário existente
       user.email = email;
       user.displayName = displayName;
-      user.photoURL = photoURL;
       await user.save();
+      console.log("Updated User");
     } else {
       // Cria um novo usuário
-      user = new User({ firebaseUid, email, displayName, photoURL });
+      user = new User({ firebaseUid, email, displayName });
       await user.save();
+      console.log("Created New User");
     }
     res.status(200).json(user);
   } catch (error) {
+    console.error("Erro ao criar/atualizar usuário:", error); // Log completo
     res.status(400).json({ message: "Erro ao criar/atualizar usuário", error: error.message });
   }
 });
