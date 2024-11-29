@@ -14,6 +14,7 @@ import { Spinner } from './components/Spinner';
 import { XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
+import { SidebarTrigger } from './components/ui/sidebar';
 
 // Interfaces
 interface WhatsappNumber {
@@ -531,8 +532,7 @@ const App: React.FC = () => {
     //login
     <div className='flex justify-between w-full'>
       <AppSidebar logout={signOut} />
-
-
+      <SidebarTrigger />
       <main className="max-w-5xl w-full mx-auto mt-14 bg-white px-4">
 
         {/* criar workspace */}
