@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, User as FirebaseUser } from 'firebase/auth';
+import logo from "@/assets/zapfy-logo-white.png"
+import { auth } from '@/config/firebase-config';
+import { signInWithPopup, GoogleAuthProvider, User as FirebaseUser, signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from './components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table';
 import { Switch } from './components/ui/switch';
@@ -12,20 +13,7 @@ import { FiExternalLink, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 import { Spinner } from './components/Spinner';
 import { XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 import { AppSidebar } from './components/app-sidebar';
-
-// Configuração do Firebase
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
-};
-
-// Inicialize o Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+import { RiGoogleFill } from "react-icons/ri";
 
 // Interfaces
 interface WhatsappNumber {
@@ -50,6 +38,9 @@ interface User {
 }
 
 const App: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorLogin, setErrorLogin] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -75,14 +66,13 @@ const App: React.FC = () => {
 
   const { toast } = useToast();
 
-  console.log(numberStats)
-
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
         const userData = await createOrUpdateUser(fbUser);
         setUser(userData);
+        console.log(user)
         fetchWorkspaces(fbUser.uid);
       } else {
         setUser(null);
@@ -123,6 +113,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingWorkspaces(false);
     }
+    console.log(numberStats)
   };
 
   // USER ROUTES
@@ -132,9 +123,9 @@ const App: React.FC = () => {
       const response = await axios.post<User>(`${API_BASE_URL}/api/user`, {
         firebaseUid: fbUser.uid,
         email: fbUser.email,
-        displayName: fbUser.displayName,
-        photoURL: fbUser.photoURL
+        displayName: fbUser.displayName
       });
+
       return response.data;
     } catch (error) {
       console.error('Erro ao criar/atualizar usuário:', error);
@@ -161,6 +152,25 @@ const App: React.FC = () => {
       title: "Logout realizado com sucesso",
 
     });
+  };
+
+  // email e senha
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
+  const handleSignInWithEmail = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Redirecionar ou realizar alguma ação após login bem-sucedido
+    } catch (error) {
+      setErrorLogin('Erro ao fazer login. Verifique suas credenciais.');
+    }
   };
 
   // NUMBER ROUTES
@@ -452,9 +462,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleViewStats = (workspace: Workspace) => {
-    fetchWorkspaceStats(workspace._id);
-  };
+  // const handleViewStats = (workspace: Workspace) => {
+  //   fetchWorkspaceStats(workspace._id);
+  // };
 
   // QR CODE
 
@@ -472,15 +482,45 @@ const App: React.FC = () => {
 
   if (!firebaseUser && !user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white w-full">
-        <div className='max-w-4xl m-auto'>
-          <h1 className="text-4xl font-bold mb-8 text-zinc-900 text-center">Zapfy</h1>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black w-full">
+        <div className="max-w-2xl mx-auto flex flex-col items-center justify-center gap-8 mb-16">
+          <img src={logo} alt='logo Zaplinker' width={'60'}></img>
+          <h1 className='text-white font-semibold text-4xl'>Bem vindo a Zaplinker</h1>
           <Button
             onClick={signInWithGoogle}
-            className="bg-zinc-800 text-white"
+            className="bg-zinc-800 text-white mb-4 w-full"
           >
-            Entrar com Google
+            Continue com o Google <RiGoogleFill />
           </Button>
+          <hr className='border-white/50 border-t w-full'></hr>
+          <div className='flex flex-col gap-4 w-full'>
+            <Input
+              type="email"
+              value={email}
+              onChange={handleEmailChange}
+              placeholder="Email"
+              className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
+            />
+            <Input
+              type="password"
+              value={password}
+              onChange={handlePasswordChange}
+              placeholder="Senha"
+              className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
+            />
+            <div className='flex flex-col'>
+              <Button
+                onClick={handleSignInWithEmail}
+                className="bg-zinc-800 text-white"
+              >
+                Entrar
+              </Button>
+              <a href="/registro" className='text-zinc-400 tracking-tight mt-1'>Não possui conta? <span className='font-semibold hover:underline'>Registre-se</span></a>
+            </div>
+          </div>
+
+
+          {errorLogin && <p className="text-red-500">{errorLogin}</p>}
         </div>
       </div>
     );
@@ -636,7 +676,7 @@ const App: React.FC = () => {
                     <TableHead className='w-[75%]'>Nome</TableHead>
                     <TableHead className='text-center'>Acessar</TableHead>
                     <TableHead className='text-center'>Editar</TableHead>
-                    <TableHead className='text-center'>Detalhes</TableHead>
+                    {/* <TableHead className='text-center'>Detalhes</TableHead> */}
                   </TableRow>
                 </TableHeader>
 
@@ -652,9 +692,9 @@ const App: React.FC = () => {
                           <FiMoreVertical />
                         </button>
                       </TableCell>
-                      <TableCell className='text-center'>
+                      {/* <TableCell className='text-center'>
                         <button onClick={() => handleViewStats(workspace)}>Ver Detalhes</button>
-                      </TableCell>
+                      </TableCell> */}
 
                     </TableRow>
                   </TableBody>
@@ -772,6 +812,13 @@ const App: React.FC = () => {
                       <div className="mt-8">
                         <h3 className="text-xl font-bold">QR Code do Workspace</h3>
                         <img src={qrCodeUrl ?? ""} alt="QR Code" />
+                        <a
+                          href={qrCodeUrl ?? ""}
+                          download="workspace-qrcode.png"
+                          className="mt-4 inline-block px-4 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-700"
+                        >
+                          Baixar QR Code
+                        </a>
                       </div>
                     </div>
                   </section>

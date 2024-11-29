@@ -6,7 +6,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
+  // SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -52,7 +52,7 @@ export function AppSidebar(props: AppSidebarProps) {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          {/* <SidebarGroupLabel>Application</SidebarGroupLabel>   */}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -84,13 +84,10 @@ export function AppSidebar(props: AppSidebarProps) {
                 className="w-[--radix-popper-anchor-width]"
               >
                 <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
+                  <span>Planos</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={props.logout}>
-                  <span >Sign out</span>
+                  <span >Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
