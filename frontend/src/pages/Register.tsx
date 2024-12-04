@@ -18,6 +18,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
 
   const navigate = useNavigate();
 
@@ -45,33 +46,33 @@ const Register = () => {
     setConfirmPassword(e.target.value);
   };
 
-  const handleSignup = async () => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (password !== confirmPassword) {
       setError('As senhas não coincidem.');
       return;
     }
 
-    console.log("Name during signup:", name); // Debug
+    setIsLoading(true)
 
     try {
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const fbUser = userCredential.user;
 
-      console.log("UID from Firebase:", fbUser.uid); // Debug
-
       const response = await axios.post<User>(`${API_BASE_URL}/api/user`, {
         firebaseUid: fbUser.uid,
         email: fbUser.email,
         displayName: name
       });
-
       navigate('/');
       return response.data;
     } catch (error) {
       setError('Erro ao cadastrar. Por favor, tente novamente.');
       console.error("Registration Error:", error); // Debug
     }
+
+    setIsLoading(false)
   };
 
   // try {
@@ -91,7 +92,7 @@ const Register = () => {
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center gap-8 mb-16">
         <img src={logo} alt='logo Zaplinker' width={'60'}></img>
         <h1 className='text-white font-semibold text-4xl'>Bem vindo a Zaplinker</h1>
-        <div className='flex flex-col gap-4 w-full text-white'>
+        <form className='flex flex-col gap-4 w-full text-white' onSubmit={handleSignup}>
           <Input
             type="text"
             value={name}
@@ -142,15 +143,16 @@ const Register = () => {
           </div>
           <div className='flex flex-col'>
             <Button
-              onClick={handleSignup}
+              // onClick={handleSignup}
               className="bg-zinc-800 text-white"
+              disabled={isLoading}
             >
-              Cadastrar
+              {isLoading ? 'Entrando...' : 'Cadastrar'}
             </Button>
-            <a href="/" className='text-zinc-400 tracking-tight mt-1'>Já possui uma conta? <span className='font-semibold hover:underline'>Entre</span></a>
+            <a href="/" className='text-zinc-400 tracking-tight mt-1'>Já possui uma conta? <span className='font-semibold hover:underline text-zinc-100'>Entre</span></a>
           </div>
           {error && <p className="text-red-500">{error}</p>}
-        </div>
+        </form>
       </div>
     </div>
   );
