@@ -2,13 +2,59 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const QRCode = require("qrcode");
-const { kMaxLength } = require("buffer");
+const useragent = require("express-useragent");
 require("dotenv").config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
+app.use(useragent.express());
+
+// const server = require("http").createServer(app);
+// const io = require("socket.io")(server, { cors: { origin: "http://localhost:5173" } });
+
+// io.on("connection", (socket) => {
+//   console.log("Usuário conectado!", socket.id);
+
+//   socket.on("disconnect", (reason) => {
+//     console.log("Usuário desconectado!", socket.id);
+//   });
+
+//   socket.on("set_username", (username) => {
+//     socket.data.username = username;
+//   });
+
+//   socket.on("message", (text) => {
+//     io.emit("receive_message", {
+//       text,
+//       authorId: socket.id,
+//       author: socket.data.username,
+//     });
+//   });
+// });
+
+const detectDeviceType = (req, res, next) => {
+  const userAgent = req.headers["user-agent"] || "";
+  req.isMobile = /mobile/i.test(userAgent);
+  next();
+};
+
+app.use(detectDeviceType);
+
+const PORT = process.env.PORT || 5000;
+
+// io.on("connection", (socket) => {
+//   console.log("Novo cliente conectado:", socket.id);
+
+//   // Teste de emissão de evento
+//   socket.emit("message", "Bem-vindo ao servidor Socket.IO!");
+
+//   socket.on("disconnect", () => {
+//     console.log("Cliente desconectado:", socket.id);
+//   });
+// });
+
+// Use esse middleware nas rotas que precisam rastrear o tipo de dispositivo
 
 // Modelo de Usuário atualizado
 const User = mongoose.model(
@@ -25,13 +71,42 @@ const User = mongoose.model(
 // Novo modelo de Workspace
 const Workspace = mongoose.model(
   "Workspace",
-  new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    customUrl: { type: String, unique: true, required: true },
-    name: { type: String, required: true, maxlength: [50, "A URL personalizada deve ter no máximo 50 caracteres."] },
-    accessCount: { type: Number, default: 0 },
-    createdAt: { type: Date, default: Date.now },
-  })
+  new mongoose.Schema(
+    {
+      name: {
+        type: String,
+        required: true,
+        maxlength: 25,
+      },
+      customUrl: {
+        type: String,
+        required: true,
+        unique: true,
+        maxlength: 35,
+        match: /^[a-zA-Z0-9_-]+$/,
+      },
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      accessCount: {
+        type: Number,
+        default: 0,
+      },
+      desktopAccessCount: {
+        type: Number,
+        default: 0,
+      },
+      mobileAccessCount: {
+        type: Number,
+        default: 0,
+      },
+    },
+    {
+      timestamps: true,
+    }
+  )
 );
 
 // Modelo de Número de WhatsApp atualizado
@@ -79,21 +154,17 @@ const authMiddleware = async (req, res, next) => {
 app.post("/api/user", async (req, res) => {
   const { firebaseUid, email, displayName } = req.body;
 
-  console.log("Received UID:", firebaseUid); // Debug
-
   try {
     let user = await User.findOne({ firebaseUid });
     if (user) {
       // Atualiza o usuário existente
       user.email = email;
-      user.displayName = displayName;
+      if (displayName) user.displayName = displayName;
       await user.save();
-      console.log("Updated User");
     } else {
       // Cria um novo usuário
       user = new User({ firebaseUid, email, displayName });
       await user.save();
-      console.log("Created New User");
     }
     res.status(200).json(user);
   } catch (error) {
@@ -144,7 +215,7 @@ app.post("/api/workspace", authMiddleware, async (req, res) => {
   }
 });
 
-// Rota para listar workspaces do usuário
+// Rota para listar workspaces do usuário com informações de estatísticas
 app.get("/api/workspaces", authMiddleware, async (req, res) => {
   try {
     const workspaces = await Workspace.find({ userId: req.user._id });
@@ -247,17 +318,44 @@ app.delete("/api/workspace/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// rota para puxar informação do workspace
+// Rota para puxar informação de estatísticas do workspace por ID
 app.get("/api/workspaces/:id/stats", async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Validar o ID para garantir que é um ObjectId válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
+
+    // Usar findById para buscar apenas um documento
     const workspace = await Workspace.findById(id);
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
-    res.json({ accessCount: workspace.accessCount });
+    // Buscar números de WhatsApp associados ao workspace
+    const numbers = await WhatsappNumber.find({ workspaceId: workspace._id });
+
+    let desktopAccessCount = 0;
+    let mobileAccessCount = 0;
+
+    numbers.forEach((number) => {
+      desktopAccessCount += number.desktopAccessCount || 0;
+      mobileAccessCount += number.mobileAccessCount || 0;
+    });
+
+    // Retornar apenas dados do workspace específico
+    res.json({
+      _id: workspace._id,
+      customUrl: workspace.customUrl,
+      accessCount: workspace.accessCount,
+      deviceStats: {
+        desktop: desktopAccessCount,
+        mobile: mobileAccessCount,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Erro no servidor", error: error.message });
   }
@@ -323,12 +421,33 @@ app.get("/api/whatsapp/:workspaceId", authMiddleware, async (req, res) => {
 app.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
-    const workspace = await Workspace.findOne({ customUrl });
+
+    // Detectar tipo de dispositivo
+    const isMobile = req.useragent.isMobile;
+
+    // Incrementa o contador de acessos de forma atômica
+    const workspace = await Workspace.findOneAndUpdate({ customUrl }, { $inc: { accessCount: 1 } }, { new: true });
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
+    // Incrementa acessos por tipo de dispositivo
+    const updateQuery = isMobile ? { $inc: { mobileAccessCount: 1 } } : { $inc: { desktopAccessCount: 1 } };
+    await Workspace.updateOne({ _id: workspace._id }, updateQuery);
+
+    // Atualizar os contadores do documento atualizado
+    // const updatedWorkspace = await Workspace.findById(workspace._id);
+
+    // // Emite evento via Socket.IO para atualizar frontend em tempo real
+    // io.emit("workspaceUpdated", {
+    //   _id: updatedWorkspace._id,
+    //   accessCount: updatedWorkspace.accessCount,
+    //   mobileAccessCount: updatedWorkspace.mobileAccessCount,
+    //   desktopAccessCount: updatedWorkspace.desktopAccessCount,
+    // });
+
+    // Seleciona números ativos
     const activeNumbers = await WhatsappNumber.find({
       workspaceId: workspace._id,
       isActive: true,
@@ -338,6 +457,7 @@ app.get("/:customUrl", async (req, res) => {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
+    // Escolhe um número aleatório para redirecionamento
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
 
     // Incrementa a contagem de acessos para este número
@@ -346,7 +466,6 @@ app.get("/:customUrl", async (req, res) => {
     });
 
     const text = randomNumber.text ? encodeURIComponent(randomNumber.text) : "";
-
     const whatsappUrl = text ? `http://wa.me/${randomNumber.number}?text=${text}&force=true` : `http://wa.me/${randomNumber.number}?force=true`;
 
     res.redirect(whatsappUrl);
@@ -433,8 +552,6 @@ app.get("/api/workspace/:id/qrcode", authMiddleware, async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
