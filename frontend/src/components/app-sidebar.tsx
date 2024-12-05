@@ -14,33 +14,24 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 interface AppSidebarProps {
+  userName?: string
   logout: () => void;
 }
 
 // Menu items.
 const items = [
   {
-    title: "Home",
+    title: "Inicio",
     url: "#",
     icon: Home,
   },
   {
-    title: "Inbox",
+    title: "Workspaces",
     url: "#",
     icon: Inbox,
   },
   {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
+    title: "Configurações",
     url: "#",
     icon: Settings,
   },
@@ -75,7 +66,7 @@ export function AppSidebar(props: AppSidebarProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> Username
+                  <User2 />{props.userName}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
