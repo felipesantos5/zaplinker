@@ -11,10 +11,10 @@ import { Input } from './components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
 import { FiExternalLink, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 import { Spinner } from './components/Spinner';
-import { XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
+import WorkspaceStatsCard from './components/ui/dashCard';
 
 // Interfaces
 interface WhatsappNumber {
@@ -24,7 +24,7 @@ interface WhatsappNumber {
   isActive: boolean;
 }
 
-interface Workspace {
+export interface Workspace {
   _id: string;
   name: string;
   customUrl: string;
@@ -58,10 +58,7 @@ const App: React.FC = () => {
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-
-  const [workspaceStats, setWorkspaceStats] = useState<{ accessCount: number } | null>(null);
   const [numberStats, setNumberStats] = useState<{ number: string; accessCount: number }[]>([]);
-  const [selectedWorkspaceStats, setSelectedWorkspaceStats] = useState<{ accessCount: number, numberStats: { number: string, accessCount: number }[] } | null>(null);
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -73,7 +70,6 @@ const App: React.FC = () => {
       if (fbUser) {
         const userData = await createOrUpdateUser(fbUser);
         setUser(userData);
-        console.log(user)
         fetchWorkspaces(fbUser.uid);
       } else {
         setUser(null);
@@ -88,10 +84,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (selectedWorkspace) {
-      axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/stats`)
-        .then(response => setWorkspaceStats(response.data))
-        .catch(error => console.error("Erro ao buscar estatísticas do workspace:", error));
-
       axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/numbers/stats`)
         .then(response => setNumberStats(response.data))
         .catch(error => console.error("Erro ao buscar estatísticas dos números:", error));
@@ -112,8 +104,18 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingWorkspaces(false);
     }
-    console.log(numberStats)
   };
+
+  // const fetchWorkspaceStats = async (customUrl: string): Promise<WorkspaceStats> => {
+  //   try {
+  //     const response = await axios.get<WorkspaceStats>(`/api/workspace/${customUrl}/stats`);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Erro ao buscar estatísticas do workspace:', error);
+  //     throw error;
+  //   }
+
+  // };
 
   // USER ROUTES
 
@@ -142,6 +144,7 @@ const App: React.FC = () => {
       });
     } catch (error) {
       console.error('Erro ao fazer login:', error);
+      console.log(numberStats)
     }
   };
 
@@ -434,7 +437,6 @@ const App: React.FC = () => {
     setSelectedWorkspace(workspace);
     setIsConfiguring(true);
     fetchNumbers(workspace._id);
-    fetchWorkspaceStats(workspace._id);
     fetchQrCode(workspace._id);
   };
 
@@ -443,27 +445,6 @@ const App: React.FC = () => {
     setIsConfiguringWorkspace(true);
     fetchNumbers(workspace._id);
   };
-
-  // WORK SPACE STATUS DASH BOARD
-  const fetchWorkspaceStats = async (workspaceId: string) => {
-    try {
-      const [workspaceResponse, numbersResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/workspaces/${workspaceId}/stats`),
-        axios.get(`${API_BASE_URL}/api/workspaces/${workspaceId}/numbers/stats`)
-      ]);
-
-      setSelectedWorkspaceStats({
-        accessCount: workspaceResponse.data.accessCount,
-        numberStats: numbersResponse.data
-      });
-    } catch (error) {
-      console.error('Erro ao buscar estatísticas do workspace:', error);
-    }
-  };
-
-  // const handleViewStats = (workspace: Workspace) => {
-  //   fetchWorkspaceStats(workspace._id);
-  // };
 
   // QR CODE
 
@@ -476,7 +457,6 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Erro ao buscar QR Code:', error);
     }
-    console.log(setQrCodeUrl)
   };
 
   if (!firebaseUser && !user) {
@@ -514,10 +494,9 @@ const App: React.FC = () => {
               >
                 Entrar
               </Button>
-              <a href="/registrar" className='text-zinc-400 tracking-tight mt-1'>Não possui conta? <span className='font-semibold hover:underline'>Registre-se</span></a>
+              <a href="/registrar" className='text-zinc-400 tracking-tight mt-1'>Não possui conta? <span className='font-semibold hover:underline text-zinc-100'>Registre-se</span></a>
             </div>
           </div>
-
 
           {errorLogin && <p className="text-red-500">{errorLogin}</p>}
         </div>
@@ -529,29 +508,35 @@ const App: React.FC = () => {
 
     //login
     <div className='flex justify-between w-full'>
-      <AppSidebar logout={signOut} />
+      <AppSidebar logout={signOut} userName={user?.displayName ?? ''} />
       <SidebarTrigger />
-      <main className="max-w-5xl w-full mx-auto mt-14 bg-white px-4">
+      <main className="max-w-5xl w-full mx-auto mt-14 bg-white pr-6">
 
         {/* criar workspace */}
         {createWorkspace &&
           <Dialog open={createWorkspace} onOpenChange={setCreateWorkspace}>
             <DialogContent>
               <DialogHeader>
+
                 <DialogTitle className='mb-6'>Criar workspace</DialogTitle>
                 <DialogDescription className='flex flex-col gap-4'>
-                  <Input
-                    type="text"
-                    value={newWorkspaceName}
-                    onChange={(e) => setNewWorkspaceName(e.target.value)}
-                    placeholder="Nome do novo workspace"
-                  />
-                  <Input
-                    type="text"
-                    value={newWorkspaceUrl}
-                    onChange={(e) => setNewWorkspaceUrl(e.target.value)}
-                    placeholder="URL personalizada"
-                  />
+                  <div className='flex flex-col gap-1'>
+                    <label htmlFor="newWorkspaceName">Nome *</label>
+                    <Input
+                      type="text"
+                      value={newWorkspaceName}
+                      onChange={(e) => setNewWorkspaceName(e.target.value)}
+                      placeholder="Nome do novo workspace"
+                    /></div>
+                  <div className='flex flex-col gap-1'>
+                    <label htmlFor="newWorkspaceUrl">Url *</label>
+                    <Input
+                      type="text"
+                      value={newWorkspaceUrl}
+                      onChange={(e) => setNewWorkspaceUrl(e.target.value)}
+                      placeholder="URL personalizada"
+                    />
+                  </div>
                   <Button onClick={handleCreateWorkspace}>Criar Workspace</Button>
                 </DialogDescription>
               </DialogHeader>
@@ -655,7 +640,7 @@ const App: React.FC = () => {
 
         {!isConfiguring ? (
           <section>
-            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo, </span>{firebaseUser?.displayName}</p>
+            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo, </span>{user?.displayName}</p>
             <div className='flex justify-between flex-wrap gap-4 mb-8 md:mb-16'>
               <h2 className="text-4xl md:text-5xl font-bold text-zinc-800">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
@@ -671,7 +656,7 @@ const App: React.FC = () => {
                 <TableHeader>
                   <TableRow>
 
-                    <TableHead className='w-[75%]'>Nome</TableHead>
+                    <TableHead className='w-[85%]'>Nome</TableHead>
                     <TableHead className='text-center'>Acessar</TableHead>
                     <TableHead className='text-center'>Editar</TableHead>
                     {/* <TableHead className='text-center'>Detalhes</TableHead> */}
@@ -712,9 +697,24 @@ const App: React.FC = () => {
 
             {selectedWorkspace && (
               <>
-                <section className='flex flex-col'>
+                <section className='flex flex-col mb-10'>
+                  <div className='mb-6'>
+                    <WorkspaceStatsCard id={selectedWorkspace._id} />
+                  </div>
+
+                  <div className='flex items-center justify-between mb-16 '>
+                    <h2 className="text-5xl font-bold text-zinc-800capitalize">{selectedWorkspace.name}</h2>
+                    <div className="">
+                      <a
+                        href={qrCodeUrl ?? ""}
+                        download={`${selectedWorkspace.name}-qrcode.png`}
+                      >
+                        <Button> Baixar QR Code</Button>
+                      </a>
+                    </div>
+                  </div>
                   <form onSubmit={handleSubmit}>
-                    <h2 className="text-5xl font-bold text-zinc-800 mb-16 capitalize">{selectedWorkspace.name}</h2>
+
                     <div className="flex flex-col gap-4 mb-4">
                       <div className='flex flex-col gap-2'>
                         <label htmlFor="">Número <span className='text-xs'>*</span></label>
@@ -762,9 +762,9 @@ const App: React.FC = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="w-[250px]">Número</TableHead>
-                            <TableHead>Texto</TableHead>
+                            <TableHead>Mensagem</TableHead>
                             <TableHead className='text-right'>Status</TableHead>
-                            <TableHead className='text-right'>Ações</TableHead>
+                            <TableHead className='text-right'>Deletar</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -791,36 +791,6 @@ const App: React.FC = () => {
                       </Table>
                     )}
                   </div>
-
-                  <section className=''>
-                    <div className="mt-8">
-                      {workspaceStats && (
-                        <div className='flex flex-col justify-between'>
-                          <h3 className="text-xl font-bold mb-4">Estatísticas do Workspace</h3>
-                          <p className='mb-2'>Total de acessos: {workspaceStats.accessCount}</p>
-                          <BarChart width={500} height={150} data={selectedWorkspaceStats?.numberStats}>
-                            <XAxis dataKey="number" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="accessCount" fill="#8884d8" />
-                          </BarChart>
-                        </div>
-                      )}
-
-                      <div className="mt-8">
-                        <h3 className="text-xl font-bold">QR Code do Workspace</h3>
-                        <img src={qrCodeUrl ?? ""} alt="QR Code" />
-                        <a
-                          href={qrCodeUrl ?? ""}
-                          download="workspace-qrcode.png"
-                          className="mt-4 inline-block px-4 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-700"
-                        >
-                          Baixar QR Code
-                        </a>
-                      </div>
-                    </div>
-                  </section>
-
                 </section>
 
 
@@ -828,9 +798,6 @@ const App: React.FC = () => {
             )}
           </div>
         )}
-
-
-
       </main >
     </div>
   );
