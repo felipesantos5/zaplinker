@@ -8,6 +8,10 @@ html {
   font-family: "Outfit", sans-serif;
 }
 
+.widith-full {
+  width: calc(100% - 32px);
+}
+
 .spinner {
   animation: spin 1s linear infinite;
   border: 4px solid #000;
