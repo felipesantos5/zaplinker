@@ -59,7 +59,7 @@ export default function PlansModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild className='mb-2'>
-        <Button className='w-full'>View Plans</Button>
+        <Button className='w-full'>Veja os Planos</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[900px]">
         <DialogHeader>
