@@ -427,17 +427,6 @@ app.get("/:customUrl", async (req, res) => {
     const updateQuery = isMobile ? { $inc: { mobileAccessCount: 1 } } : { $inc: { desktopAccessCount: 1 } };
     await Workspace.updateOne({ _id: workspace._id }, updateQuery);
 
-    // Atualizar os contadores do documento atualizado
-    // const updatedWorkspace = await Workspace.findById(workspace._id);
-
-    // // Emite evento via Socket.IO para atualizar frontend em tempo real
-    // io.emit("workspaceUpdated", {
-    //   _id: updatedWorkspace._id,
-    //   accessCount: updatedWorkspace.accessCount,
-    //   mobileAccessCount: updatedWorkspace.mobileAccessCount,
-    //   desktopAccessCount: updatedWorkspace.desktopAccessCount,
-    // });
-
     // Seleciona números ativos
     const activeNumbers = await WhatsappNumber.find({
       workspaceId: workspace._id,
