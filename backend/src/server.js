@@ -10,29 +10,6 @@ app.use(cors());
 app.use(express.json());
 app.use(useragent.express());
 
-// const server = require("http").createServer(app);
-// const io = require("socket.io")(server, { cors: { origin: "http://localhost:5173" } });
-
-// io.on("connection", (socket) => {
-//   console.log("Usuário conectado!", socket.id);
-
-//   socket.on("disconnect", (reason) => {
-//     console.log("Usuário desconectado!", socket.id);
-//   });
-
-//   socket.on("set_username", (username) => {
-//     socket.data.username = username;
-//   });
-
-//   socket.on("message", (text) => {
-//     io.emit("receive_message", {
-//       text,
-//       authorId: socket.id,
-//       author: socket.data.username,
-//     });
-//   });
-// });
-
 const detectDeviceType = (req, res, next) => {
   const userAgent = req.headers["user-agent"] || "";
   req.isMobile = /mobile/i.test(userAgent);
@@ -41,18 +18,20 @@ const detectDeviceType = (req, res, next) => {
 
 app.use(detectDeviceType);
 
-const PORT = process.env.PORT || 5000;
-
-// io.on("connection", (socket) => {
-//   console.log("Novo cliente conectado:", socket.id);
-
-//   // Teste de emissão de evento
-//   socket.emit("message", "Bem-vindo ao servidor Socket.IO!");
-
-//   socket.on("disconnect", () => {
-//     console.log("Cliente desconectado:", socket.id);
-//   });
-// });
+const PLAN_LIMITS = {
+  free: {
+    maxWorkspaces: 5,
+    maxNumbersPerWorkspace: 5,
+  },
+  essential: {
+    maxWorkspaces: 10,
+    maxNumbersPerWorkspace: 20,
+  },
+  pro: {
+    maxWorkspaces: Infinity,
+    maxNumbersPerWorkspace: Infinity,
+  },
+};
 
 // Use esse middleware nas rotas que precisam rastrear o tipo de dispositivo
 
@@ -65,6 +44,7 @@ const User = mongoose.model(
     displayName: String,
     createdAt: { type: Date, default: Date.now },
     personalHash: { type: Date, default: Date.now },
+    role: { type: String, default: "free", enum: ["free", "essential", "pro"] }, // Novo campo para o plano
   })
 );
 
@@ -132,6 +112,19 @@ const connectDB = async () => {
 };
 
 connectDB();
+// .then(() => {
+//   const resetDatabase = async () => {
+//     try {
+//       await mongoose.connection.db.collection("users").deleteMany({});
+//       await mongoose.connection.db.collection("whatsappnumbers").deleteMany({});
+//       await mongoose.connection.db.collection("workspaces").deleteMany({});
+//       console.log("Todas as coleções foram resetadas.");
+//     } catch (error) {
+//       console.error("Erro ao resetar banco de dados:", error);
+//     }
+//   };
+//   resetDatabase();
+// });
 
 // Middleware de autenticação
 const authMiddleware = async (req, res, next) => {
@@ -181,27 +174,19 @@ app.post("/api/workspace", authMiddleware, async (req, res) => {
     return res.status(400).json({ message: "URL personalizada e nome são obrigatórios" });
   }
 
-  if (name.length > 25) {
-    return res.status(400).json({ message: "Nome do workspace invalido, maximo de 25 caracteres" });
-  }
-  if (customUrl.length > 35) {
-    return res.status(400).json({ message: "URL personalizada invalido, maximo de 30 caracteres" });
-  }
+  const userPlan = req.user.role;
+  const userWorkspacesCount = await Workspace.countDocuments({ userId: req.user._id });
 
-  // Validar o formato da URL personalizada
-  const urlRegex = /^[a-zA-Z0-9_-]+$/;
-  if (!urlRegex.test(customUrl)) {
-    return res.status(400).json({ message: "Formato de URL inválido" });
+  if (userWorkspacesCount >= PLAN_LIMITS[userPlan].maxWorkspaces) {
+    return res.status(403).json({ message: "Limite de workspaces atingido para o seu plano" });
   }
 
   try {
-    // Verificar se a URL já está em uso
     const existingWorkspace = await Workspace.findOne({ customUrl });
     if (existingWorkspace) {
       return res.status(409).json({ message: "URL já está em uso" });
     }
 
-    // Criar novo workspace
     const newWorkspace = new Workspace({
       userId: req.user._id,
       customUrl,
@@ -383,10 +368,16 @@ app.post("/api/whatsapp", authMiddleware, async (req, res) => {
   try {
     const { workspaceId, number, text } = req.body;
 
-    // Verificar se o workspace pertence ao usuário
     const workspace = await Workspace.findOne({ _id: workspaceId, userId: req.user._id });
     if (!workspace) {
       return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    const userPlan = req.user.role;
+    const numbersCount = await WhatsappNumber.countDocuments({ workspaceId });
+
+    if (numbersCount >= PLAN_LIMITS[userPlan].maxNumbersPerWorkspace) {
+      return res.status(403).json({ message: "Limite de números atingido para este workspace" });
     }
 
     const newNumber = new WhatsappNumber({ workspaceId, number, text });
@@ -551,6 +542,8 @@ app.get("/api/workspace/:id/qrcode", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Erro no servidor", error: error.message });
   }
 });
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
