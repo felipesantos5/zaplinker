@@ -496,7 +496,7 @@ app.delete("/api/whatsapp/:numberId", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Acesso negado" });
     }
 
-    await number.remove();
+    await number.deleteOne({ _id: number.workspaceId });
 
     res.json({ message: "Número deletado com sucesso" });
   } catch (error) {
