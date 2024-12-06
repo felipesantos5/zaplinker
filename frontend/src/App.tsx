@@ -223,11 +223,11 @@ const App: React.FC = () => {
         title: "Número adicionado com sucesso",
 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao adicionar número:', error);
       toast({
         title: "Erro ao adicionar número",
-        description: "Ocorreu um erro ao tentar adicionar o número.",
+        description: error.response.data.message,
         variant: "destructive",
       });
     }
@@ -388,6 +388,10 @@ const App: React.FC = () => {
         headers: { 'Firebase-UID': firebaseUser.uid }
       });
 
+      toast({
+        title: "Workspace deletado com sucesso"
+      });
+
       // Atualiza a lista de workspaces
       fetchWorkspaces(firebaseUser.uid);
 
@@ -400,10 +404,7 @@ const App: React.FC = () => {
       setIsConfirmingDelete(false)
 
       // Mostra toast de sucesso
-      toast({
-        title: "Workspace deletado com sucesso",
 
-      });
     } catch (error: any) {
       console.error('Erro ao deletar workspace:', error);
 
@@ -666,7 +667,7 @@ const App: React.FC = () => {
                 {workspaces.map((workspace) => (
                   <TableBody>
                     <TableRow key={workspace._id}>
-                      <TableCell className='capitalize'><button onClick={() => handleSelectWorkspace(workspace)}>{workspace.name}</button></TableCell>
+                      <TableCell><button onClick={() => handleSelectWorkspace(workspace)} className='capitalize'>{workspace.name}</button></TableCell>
                       <TableCell className='text-center'>
                         <button onClick={() => handleSelectWorkspace(workspace)}><FiExternalLink size={'18px'} /></button>
                       </TableCell>
