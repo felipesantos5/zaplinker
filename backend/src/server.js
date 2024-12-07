@@ -533,7 +533,7 @@ app.get("/api/workspace/:id/qrcode", authMiddleware, async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.redirect("https://app.zaplinker.com");
+  res.redirect("https://use.zaplinker.com");
 });
 
 const PORT = process.env.PORT || 5000;
