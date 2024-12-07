@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import logo from "@/assets/zapfy-logo-white.png"
 import { auth } from '@/config/firebase-config';
@@ -15,6 +15,7 @@ import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
 import WorkspaceStatsCard from './components/ui/dashCard';
+import { ClipboardCopy } from 'lucide-react';
 
 // Interfaces
 interface WhatsappNumber {
@@ -59,6 +60,8 @@ const App: React.FC = () => {
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [numberStats, setNumberStats] = useState<{ number: string; accessCount: number }[]>([]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -434,6 +437,19 @@ const App: React.FC = () => {
     }
   };
 
+
+
+  const handleCopy = () => {
+    // Seleciona o texto do input
+    if (inputRef.current) {
+      inputRef.current.select();
+      inputRef.current.setSelectionRange(0, 99999); // Para dispositivos móveis
+
+      // Copia o texto selecionado
+      navigator.clipboard.writeText(inputRef.current.value)
+    }
+  };
+
   const handleSelectWorkspace = (workspace: Workspace) => {
     setSelectedWorkspace(workspace);
     setIsConfiguring(true);
@@ -446,6 +462,7 @@ const App: React.FC = () => {
     setIsConfiguringWorkspace(true);
     fetchNumbers(workspace._id);
   };
+
 
   // QR CODE
 
@@ -510,8 +527,8 @@ const App: React.FC = () => {
     //login
     <div className='flex justify-between w-full'>
       <AppSidebar logout={signOut} userName={user?.displayName ?? ''} />
-      <SidebarTrigger />
-      <main className="max-w-5xl w-full mx-auto mt-14 bg-white pr-6">
+      <SidebarTrigger className='md:hidden' />
+      <main className="max-w-5xl w-full mx-auto mt-14 pr-6 md:px-6">
 
         {/* criar workspace */}
         {createWorkspace &&
@@ -538,7 +555,7 @@ const App: React.FC = () => {
                       placeholder="URL personalizada"
                     />
                   </div>
-                  <Button onClick={handleCreateWorkspace}>Criar Workspace</Button>
+                  <Button onClick={handleCreateWorkspace} className='h-10 mb-2'>Criar Workspace</Button>
                 </DialogDescription>
               </DialogHeader>
             </DialogContent>
@@ -552,10 +569,10 @@ const App: React.FC = () => {
               {!isConfirmingDelete ? (
                 <>
                   <DialogHeader>
-                    <DialogTitle className='text-[28px] mb-10'>Editar Workspace</DialogTitle>
+                    <DialogTitle>Editar Workspace</DialogTitle>
                     <DialogDescription>
-                      <section className="">
-                        <div className="flex flex-col gap-2 mb-4">
+                      <section>
+                        <div className="flex flex-col gap-2">
                           <div className='mb-2 flex flex-col gap-2'>
                             <label htmlFor="">Nome do workspace</label>
                             <Input
@@ -572,7 +589,7 @@ const App: React.FC = () => {
                               placeholder="Nome do workspace"
                             />
                           </div>
-                          <div className='mb-8 flex flex-col gap-2'>
+                          <div className='mb-6 flex flex-col gap-2'>
                             <label htmlFor="">Url personalizada</label>
                             <Input
                               type="text"
@@ -641,9 +658,9 @@ const App: React.FC = () => {
 
         {!isConfiguring ? (
           <section>
-            <p className="text-black text-sm mb-2"><span className=''>Bem-vindo, </span>{user?.displayName}</p>
+            <p className="text-black dark:text-white text-sm mb-2"><span className=''>Bem-vindo, </span>{user?.displayName}</p>
             <div className='flex justify-between flex-wrap gap-4 mb-8 md:mb-16'>
-              <h2 className="text-4xl md:text-5xl font-bold text-zinc-800">Workspaces</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-zinc-800 dark:text-zinc-200">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
             </div>
             {isLoadingWorkspaces ? (
@@ -740,20 +757,31 @@ const App: React.FC = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full bg-zinc-800 text-white h-10"
+                      className="w-full h-10"
                     >
                       Adicionar
                     </Button>
                   </form>
-
                   <div className="border p-4 rounded-xl mt-6">
-                    <p className="font-semibold mb-2 text-zinc-700">URL personalizada do workspace:</p>
-                    <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} target="_blank" rel="noopener noreferrer" className="mt-2 block text-blue-500 hover:underline break-all">
-                      {`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
-                    </a>
+                    <p className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">URL personalizada do workspace:</p>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        ref={inputRef}
+                        type="text"
+                        readOnly
+                        value={`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
+                        className='pointer-events-none'
+                      />
+                      <Button
+                        onClick={handleCopy}
+                        className='flex gap-2 items-center'
+                      >
+                        <ClipboardCopy /> Copiar URL
+                      </Button>
+                    </div>
                   </div>
 
-                  <div className=' border border-gray-200 p-4 rounded-xl mt-10'>
+                  <div className=' border p-4 rounded-xl mt-10'>
                     {isLoadingNumbers ? (
                       <div className="flex justify-center items-center w-full h-full">
                         <Spinner />

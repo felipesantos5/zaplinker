@@ -1,17 +1,23 @@
-import { ChevronUp, Home, Inbox, Settings, User2 } from "lucide-react"
+import { ChevronUp, Home, Inbox, Moon, Settings, Sun, User2 } from "lucide-react"
+import logodark from "@/assets/zapfy-logo.png"
+import logowhite from "@/assets/zapfy-logo-white.png"
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  // SidebarGroupLabel,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarHeader,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import PlansModal from "./plansModal";
+import { DarkModeButton } from "./darkModeButton";
+import { useTheme } from "@/context/ThemeContext";
 
 interface AppSidebarProps {
   userName?: string
@@ -38,12 +44,16 @@ const items = [
 ]
 
 export function AppSidebar(props: AppSidebarProps) {
+  const { isDarkMode, toggleTheme } = useTheme();
 
   return (
     <Sidebar>
+      <SidebarHeader>
+        <img src={isDarkMode ? logowhite : logodark} alt="" className="w-6 my-2 mx-auto" />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          {/* <SidebarGroupLabel>Application</SidebarGroupLabel>   */}
+          {/* <SidebarGroupLabel>Application</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -80,6 +90,9 @@ export function AppSidebar(props: AppSidebarProps) {
               >
                 <DropdownMenuItem onClick={props.logout}>
                   <span >Sair</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {isDarkMode ? <span className="flex gap-2 justify-center items-center"><Sun size={18} /> modo claro</span> : <span className="flex gap-2 justify-center items-center"><Moon size={18} /> modo escuro</span>}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
