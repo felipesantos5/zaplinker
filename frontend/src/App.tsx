@@ -16,6 +16,7 @@ import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
 import WorkspaceStatsCard from './components/ui/dashCard';
 import { ClipboardCopy } from 'lucide-react';
+import { useTheme } from './context/ThemeContext';
 
 // Interfaces
 interface WhatsappNumber {
@@ -40,6 +41,8 @@ interface User {
 }
 
 const App: React.FC = () => {
+  const { isDarkMode } = useTheme();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorLogin, setErrorLogin] = useState('');
@@ -708,7 +711,7 @@ const App: React.FC = () => {
           <div className=''>
             <div className='flex items-center mb-4'>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 19L8 12L15 5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M15 19L8 12L15 5" stroke={isDarkMode ? 'white' : 'black'} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               <a onClick={() => setIsConfiguring(false)} className="cursor-pointer hover:underline font-bo">Voltar</a>
             </div>
