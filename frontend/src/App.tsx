@@ -672,15 +672,12 @@ const App: React.FC = () => {
               </div>
             ) : (
 
-              <Table className=''>
-
+              <Table>
                 <TableHeader>
                   <TableRow>
-
                     <TableHead className='w-[85%]'>Nome</TableHead>
                     <TableHead className='text-center'>Acessar</TableHead>
                     <TableHead className='text-center'>Editar</TableHead>
-                    {/* <TableHead className='text-center'>Detalhes</TableHead> */}
                   </TableRow>
                 </TableHeader>
 
@@ -768,13 +765,15 @@ const App: React.FC = () => {
                   <div className="border p-4 rounded-xl mt-6">
                     <p className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">URL personalizada do workspace:</p>
                     <div className="flex items-center gap-4">
-                      <Input
-                        ref={inputRef}
-                        type="text"
-                        readOnly
-                        value={`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
-                        className='pointer-events-none'
-                      />
+                      <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} className='w-full'>
+                        <Input
+                          ref={inputRef}
+                          type="text"
+                          readOnly
+                          value={`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
+                          className='pointer-events-none'
+                        />
+                      </a>
                       <Button
                         onClick={handleCopy}
                         className='flex gap-2 items-center'
