@@ -20,12 +20,12 @@ app.use(detectDeviceType);
 
 const PLAN_LIMITS = {
   free: {
-    maxWorkspaces: 5,
-    maxNumbersPerWorkspace: 5,
+    maxWorkspaces: 1,
+    maxNumbersPerWorkspace: 2,
   },
   essential: {
-    maxWorkspaces: 10,
-    maxNumbersPerWorkspace: 20,
+    maxWorkspaces: 5,
+    maxNumbersPerWorkspace: 10,
   },
   pro: {
     maxWorkspaces: Infinity,
