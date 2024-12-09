@@ -9,7 +9,7 @@ import { Switch } from './components/ui/switch';
 import { useToast } from './hooks/use-toast';
 import { Input } from './components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { FiExternalLink, FiMoreVertical, FiTrash2 } from "react-icons/fi";
+import { FiExternalLink, FiEye, FiEyeOff, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 import { Spinner } from './components/Spinner';
 import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
@@ -45,6 +45,7 @@ const App: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorLogin, setErrorLogin] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -179,6 +180,10 @@ const App: React.FC = () => {
     } catch (error) {
       setErrorLogin('Erro ao fazer login. Verifique suas credenciais.');
     }
+  };
+
+  const toggleShowPassword = () => {
+    setShowPassword(prevState => !prevState);
   };
 
   // NUMBER ROUTES
@@ -501,13 +506,23 @@ const App: React.FC = () => {
               placeholder="Email"
               className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
             />
-            <Input
-              type="password"
-              value={password}
-              onChange={handlePasswordChange}
-              placeholder="Senha"
-              className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
-            />
+            <div className='relative'>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="Senha"
+                className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
+              />
+              <span
+                onClick={toggleShowPassword}
+                className="absolute top-[10px] right-[10px] text-white"
+                role="button"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </span>
+            </div>
             <div className='flex flex-col'>
               <Button
                 onClick={handleSignInWithEmail}
