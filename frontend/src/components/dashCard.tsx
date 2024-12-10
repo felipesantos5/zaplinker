@@ -1,19 +1,14 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-// import { io } from 'socket.io-client';
-import { Card } from './card';
+import { Card } from './ui/card';
 import { Computer, Globe, Smartphone } from 'lucide-react';
-
-interface DeviceStats {
-  desktop: number;
-  mobile: number;
-}
 
 interface WorkspaceStats {
   _id: string;
   customUrl: string;
   accessCount: number;
-  deviceStats: DeviceStats;
+  desktopAccessCount: number
+  mobileAccessCount: number
 }
 
 interface WorkspaceStatsCardProps {
@@ -28,21 +23,6 @@ const WorkspaceStatsCard: React.FC<WorkspaceStatsCardProps> = ({ id }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // const socket = io("http://localhost:5000"); // Conectar ao servidor de WebSocket
-
-    // // Escutar eventos de atualização
-    // socket.on("connect", () => {
-    //   console.log("Conectado ao servidor de WebSocket");
-    // });
-
-    // socket.on("message", (data) => {
-    //   console.log("Mensagem do servidor:", data);
-    // });
-
-    // socket.on("disconnect", () => {
-    //   console.log("Desconectado do servidor de WebSocket");
-    // });
-
     const loadStats = async () => {
       try {
         console.log(`Carregando estatísticas para o ID: ${id}`);
@@ -59,11 +39,6 @@ const WorkspaceStatsCard: React.FC<WorkspaceStatsCardProps> = ({ id }) => {
     };
 
     loadStats();
-
-    // Limpeza na desmontagem do componente
-    // return () => {
-    //   socket.disconnect();
-    // };
   }, [id]);
 
   const fetchWorkspaceStats = async (id: string): Promise<WorkspaceStats> => {
@@ -88,14 +63,12 @@ const WorkspaceStatsCard: React.FC<WorkspaceStatsCardProps> = ({ id }) => {
             <span className='font-bold text-2xl'>{stats.accessCount}</span>
           </Card>
           <Card className='sm:w-1/3 h-28 p-4 flex flex-col justify-between'>
-            <p className='flex gap-2 items-center'><Computer size={22} /> Desktop</p>
-            <span>em breve...</span>
-            {/* {stats.deviceStats.desktop} */}
+            <p className='flex gap-2 items-center'><Smartphone size={22} />Mobile</p>
+            {stats.mobileAccessCount}
           </Card>
           <Card className='sm:w-1/3 h-28 p-4 flex flex-col justify-between'>
-            <p className='flex gap-2 items-center'><Smartphone size={22} />Mobile</p>
-            <span>em breve...</span>
-            {/* {stats.deviceStats.mobile} */}
+            <p className='flex gap-2 items-center'><Computer size={22} /> Desktop</p>
+            {stats.desktopAccessCount}
           </Card>
         </div>
       )}
