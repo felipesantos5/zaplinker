@@ -64,11 +64,11 @@ const WorkspaceStatsCard: React.FC<WorkspaceStatsCardProps> = ({ id }) => {
           </Card>
           <Card className='sm:w-1/3 h-28 p-4 flex flex-col justify-between'>
             <p className='flex gap-2 items-center'><Smartphone size={22} />Mobile</p>
-            {stats.mobileAccessCount}
+            <span className='font-bold text-2xl'>{stats.mobileAccessCount}</span>
           </Card>
           <Card className='sm:w-1/3 h-28 p-4 flex flex-col justify-between'>
             <p className='flex gap-2 items-center'><Computer size={22} /> Desktop</p>
-            {stats.desktopAccessCount}
+            <span className='font-bold text-2xl'>{stats.desktopAccessCount}</span>
           </Card>
         </div>
       )}
