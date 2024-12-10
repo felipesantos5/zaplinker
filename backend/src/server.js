@@ -416,16 +416,12 @@ app.get("/:customUrl", async (req, res) => {
     // Detectar tipo de dispositivo
     const isMobile = req.useragent.isMobile;
 
-    // Incrementa o contador de acessos de forma atômica
-    const workspace = await Workspace.findOneAndUpdate({ customUrl }, { $inc: { accessCount: 1 } }, { new: true });
+    // Verifica se o workspace existe
+    const workspace = await Workspace.findOne({ customUrl });
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
-
-    // Incrementa acessos por tipo de dispositivo
-    const updateQuery = isMobile ? { $inc: { mobileAccessCount: 1 } } : { $inc: { desktopAccessCount: 1 } };
-    await Workspace.updateOne({ _id: workspace._id }, updateQuery);
 
     // Seleciona números ativos
     const activeNumbers = await WhatsappNumber.find({
@@ -436,6 +432,13 @@ app.get("/:customUrl", async (req, res) => {
     if (activeNumbers.length === 0) {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
+
+    // Incrementa o contador de acessos do workspace após verificar números ativos
+    await Workspace.updateOne({ _id: workspace._id }, { $inc: { accessCount: 1 } });
+
+    // Incrementa acessos por tipo de dispositivo
+    const updateQuery = isMobile ? { $inc: { mobileAccessCount: 1 } } : { $inc: { desktopAccessCount: 1 } };
+    await Workspace.updateOne({ _id: workspace._id }, updateQuery);
 
     // Escolhe um número aleatório para redirecionamento
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
