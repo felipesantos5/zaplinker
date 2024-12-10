@@ -12,7 +12,7 @@ app.use(useragent.express());
 
 const detectDeviceType = (req, res, next) => {
   const userAgent = req.headers["user-agent"] || "";
-  req.isMobile = /mobile/i.test(userAgent);
+  req.isMobile = /Mobile|Android|iP(hone|od|ad)|IEMobile|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
   next();
 };
 
@@ -336,10 +336,8 @@ app.get("/api/workspaces/:id/stats", async (req, res) => {
       _id: workspace._id,
       customUrl: workspace.customUrl,
       accessCount: workspace.accessCount,
-      deviceStats: {
-        desktop: desktopAccessCount,
-        mobile: mobileAccessCount,
-      },
+      desktopAccessCount: workspace.desktopAccessCount,
+      mobileAccessCount: workspace.mobileAccessCount,
     });
   } catch (error) {
     res.status(500).json({ message: "Erro no servidor", error: error.message });
@@ -415,6 +413,9 @@ app.get("/:customUrl", async (req, res) => {
 
     // Detectar tipo de dispositivo
     const isMobile = req.useragent.isMobile;
+    const isDesktop = req.useragent.isDesktop;
+
+    console.log(`Mobile: ${isMobile}, Desktop: ${isDesktop}`);
 
     // Verifica se o workspace existe
     const workspace = await Workspace.findOne({ customUrl });
