@@ -18,7 +18,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -56,7 +56,6 @@ const Register = () => {
     setIsLoading(true)
 
     try {
-
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const fbUser = userCredential.user;
 
@@ -69,23 +68,10 @@ const Register = () => {
       return response.data;
     } catch (error) {
       setError('Erro ao cadastrar. Por favor, tente novamente.');
-      console.error("Registration Error:", error); // Debug
     }
 
     setIsLoading(false)
   };
-
-  // try {
-  //   const response = await axios.post<User>(`${API_BASE_URL}/api/user`, {
-  //     firebaseUid: fbUser.uid,
-  //     email: fbUser.email,
-  //     displayName: fbUser.displayName
-  //   });
-  //   return response.data;
-  // } catch (error) {
-  //   console.error('Erro ao criar/atualizar usuário:', error);
-  //   throw error;
-  // }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black w-full">
@@ -144,7 +130,7 @@ const Register = () => {
           <div className='flex flex-col'>
             <Button
               // onClick={handleSignup}
-              className="bg-zinc-800 text-white"
+              className=""
               disabled={isLoading}
             >
               {isLoading ? 'Entrando...' : 'Cadastrar'}

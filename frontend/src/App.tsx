@@ -14,7 +14,7 @@ import { Spinner } from './components/Spinner';
 import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
-import WorkspaceStatsCard from './components/ui/dashCard';
+import WorkspaceStatsCard from './components/dashCard';
 import { ClipboardCopy } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 
@@ -41,8 +41,6 @@ interface User {
 }
 
 const App: React.FC = () => {
-  const { isDarkMode } = useTheme();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +68,7 @@ const App: React.FC = () => {
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const { toast } = useToast();
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (fbUser) => {
@@ -112,17 +111,6 @@ const App: React.FC = () => {
       setIsLoadingWorkspaces(false);
     }
   };
-
-  // const fetchWorkspaceStats = async (customUrl: string): Promise<WorkspaceStats> => {
-  //   try {
-  //     const response = await axios.get<WorkspaceStats>(`/api/workspace/${customUrl}/stats`);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error('Erro ao buscar estatísticas do workspace:', error);
-  //     throw error;
-  //   }
-
-  // };
 
   // USER ROUTES
 
@@ -493,7 +481,7 @@ const App: React.FC = () => {
           <h1 className='text-white font-semibold text-4xl'>Bem vindo a Zaplinker</h1>
           <Button
             onClick={signInWithGoogle}
-            className="bg-zinc-800 text-white mb-4 w-full"
+            className="mb-4 w-full"
           >
             Continue com o Google <RiGoogleFill />
           </Button>
@@ -526,7 +514,7 @@ const App: React.FC = () => {
             <div className='flex flex-col'>
               <Button
                 onClick={handleSignInWithEmail}
-                className="bg-zinc-800 text-white"
+                className=""
               >
                 Entrar
               </Button>
@@ -587,7 +575,7 @@ const App: React.FC = () => {
               {!isConfirmingDelete ? (
                 <>
                   <DialogHeader>
-                    <DialogTitle>Editar Workspace</DialogTitle>
+                    <DialogTitle className='mb-6'>Editar Workspace</DialogTitle>
                     <DialogDescription>
                       <section>
                         <div className="flex flex-col gap-2">
@@ -708,10 +696,6 @@ const App: React.FC = () => {
                           <FiMoreVertical />
                         </button>
                       </TableCell>
-                      {/* <TableCell className='text-center'>
-                        <button onClick={() => handleViewStats(workspace)}>Ver Detalhes</button>
-                      </TableCell> */}
-
                     </TableRow>
                   </TableBody>
                 ))}
