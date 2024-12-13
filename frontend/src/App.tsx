@@ -529,10 +529,7 @@ const App: React.FC = () => {
   }
 
   return (
-
-    //login
     <div className='flex justify-between w-full'>
-
       {user && (
         <AppSidebar logout={signOut} user={user} />
       )}
@@ -544,7 +541,6 @@ const App: React.FC = () => {
           <Dialog open={createWorkspace} onOpenChange={setCreateWorkspace}>
             <DialogContent>
               <DialogHeader>
-
                 <DialogTitle className='mb-6'>Criar workspace</DialogTitle>
                 <DialogDescription className='flex flex-col gap-4'>
                   <div className='flex flex-col gap-1'>
@@ -690,12 +686,12 @@ const App: React.FC = () => {
                 {workspaces.map((workspace) => (
                   <TableBody>
                     <TableRow key={workspace._id}>
-                      <TableCell><button onClick={() => handleSelectWorkspace(workspace)} className='capitalize'>{workspace.name}</button></TableCell>
-                      <TableCell className='text-center'>
-                        <button onClick={() => handleSelectWorkspace(workspace)}><FiExternalLink size={'18px'} /></button>
+                      <TableCell onClick={() => handleSelectWorkspace(workspace)} className='cursor-pointer'><button onClick={() => handleSelectWorkspace(workspace)} className='capitalize'>{workspace.name}</button></TableCell>
+                      <TableCell className='text-center' onClick={() => handleSelectWorkspace(workspace)}>
+                        <button><FiExternalLink size={'18px'} /></button>
                       </TableCell>
                       <TableCell className='text-center'>
-                        <button onClick={() => handleEditWorkSpace(workspace)}>
+                        <button onClick={() => handleEditWorkSpace(workspace)} className='z-20'>
                           <FiMoreVertical />
                         </button>
                       </TableCell>
@@ -719,7 +715,7 @@ const App: React.FC = () => {
               <>
                 <section className='flex flex-col mb-10'>
                   <div className='mb-6'>
-                    <WorkspaceStatsCard id={selectedWorkspace._id} />
+                    {user?.role !== 'free' && <WorkspaceStatsCard id={selectedWorkspace._id} />}
                   </div>
 
                   <div className='flex items-center justify-between mb-16 '>
