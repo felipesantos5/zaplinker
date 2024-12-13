@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, X } from 'lucide-react'
+import { link } from 'fs'
 
 interface PlansModalProps {
   role: string;
@@ -41,6 +42,7 @@ const plans = [
       { name: 'Metricas de trafego', included: true },
       { name: 'Personalização de UTMS', included: false },
     ],
+    link: 'https://buy.stripe.com/bIY9CKbQ207x7EQ288'
   },
   {
     title: 'Plano Premium',
@@ -54,6 +56,7 @@ const plans = [
       { name: 'Metricas de trafego', included: true },
       { name: 'Personalização de UTMS', included: true },
     ],
+    link: 'https://buy.stripe.com/eVa4iqbQ27zZ7EQaEF'
   },
 ];
 
@@ -100,9 +103,13 @@ export default function PlansModal(props: PlansModalProps) {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full" disabled={props.role === plan.name}>
-                  {props.role === plan.name ? 'Plano Atual' : 'Assinar Agora'}
+
+                <Button className="w-full p-0" disabled={props.role === plan.name}>
+                  <a href={plan.link} className='w-full py-2'>
+                    {props.role === plan.name ? 'Plano Atual' : 'Assinar Agora'}
+                  </a>
                 </Button>
+
               </CardFooter>
             </Card>
           ))}
