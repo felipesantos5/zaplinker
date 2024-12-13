@@ -23,11 +23,11 @@ const PLAN_LIMITS = {
     maxWorkspaces: 1,
     maxNumbersPerWorkspace: 2,
   },
-  essential: {
+  pro: {
     maxWorkspaces: 5,
     maxNumbersPerWorkspace: 10,
   },
-  pro: {
+  premium: {
     maxWorkspaces: Infinity,
     maxNumbersPerWorkspace: Infinity,
   },
@@ -44,7 +44,7 @@ const User = mongoose.model(
     displayName: String,
     createdAt: { type: Date, default: Date.now },
     personalHash: { type: Date, default: Date.now },
-    role: { type: String, default: "free", enum: ["free", "essential", "pro"] }, // Novo campo para o plano
+    role: { type: String, default: "free", enum: ["free", "pro", "premium"] }, // Novo campo para o plano
   })
 );
 
