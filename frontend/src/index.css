@@ -44,11 +44,6 @@ html {
   background-clip: content-box;
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #000 transparent;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;

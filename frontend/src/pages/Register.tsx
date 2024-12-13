@@ -129,13 +129,11 @@ const Register = () => {
           </div>
           <div className='flex flex-col'>
             <Button
-              // onClick={handleSignup}
-              className=""
               disabled={isLoading}
             >
               {isLoading ? 'Entrando...' : 'Cadastrar'}
             </Button>
-            <a href="/" className='text-zinc-400 tracking-tight mt-1'>Já possui uma conta? <span className='font-semibold hover:underline text-zinc-100'>Entre</span></a>
+            <a href="/" className='text-zinc-400 tracking-tight mt-2'>Já possui uma conta? <span className='font-semibold hover:underline text-zinc-100'>Entre</span></a>
           </div>
           {error && <p className="text-red-500">{error}</p>}
         </form>
