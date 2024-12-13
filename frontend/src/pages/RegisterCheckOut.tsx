@@ -28,14 +28,6 @@ const RegisterCheckOut = () => {
   const params = new URLSearchParams(location.search);
   const planType = params.get('plan');
 
-  console.log(planType)
-
-  // Validação do plano 
-  const validPlans = ['pro', 'premium'];
-  if (!validPlans.includes(planType)) {
-    navigate('https://use.zaplinker.com/');
-  }
-
   const toggleShowPassword = () => {
     setShowPassword(prevState => !prevState);
   };
@@ -61,9 +53,6 @@ const RegisterCheckOut = () => {
   };
 
   const handleCheckoutRedirect = () => {
-    // const params = new URLSearchParams(window.location.search);
-    // const planType = params.get('plan');
-
     const baseUrl = "https://buy.stripe.com/";
     let targetUrl;
 
