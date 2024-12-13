@@ -8,7 +8,6 @@ import { FiEye, FiEyeOff } from 'react-icons/fi';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RiGoogleFill } from 'react-icons/ri';
-import { toast } from '@/hooks/use-toast';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -56,7 +55,6 @@ const RegisterCheckOut = () => {
     const baseUrl = "https://buy.stripe.com/";
     let targetUrl;
 
-    // Decide a URL de destino com base no tipo de plano
     if (planType === 'pro') {
       targetUrl = `${baseUrl}bIY9CKbQ207x7EQ288`;
     } else if (planType === 'premium') {
@@ -65,7 +63,6 @@ const RegisterCheckOut = () => {
       return;
     }
 
-    // Redireciona para a URL determinada
     window.location.href = targetUrl;
   };
 
@@ -105,9 +102,7 @@ const RegisterCheckOut = () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      toast({
-        title: "Login realizado com sucesso",
-      });
+
       if (planType === 'pro') {
         window.location.href = ('https://buy.stripe.com/bIY9CKbQ207x7EQ288');
       } else if (planType === 'premium') {
