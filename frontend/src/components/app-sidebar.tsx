@@ -17,10 +17,12 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import PlansModal from "./plansModal";
 import { useTheme } from "@/context/ThemeContext";
+import { User } from "@/App"
 
 interface AppSidebarProps {
-  userName?: string
+  user: User
   logout: () => void;
+
 }
 
 // Menu items.
@@ -72,14 +74,13 @@ export function AppSidebar(props: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <PlansModal />
+            <PlansModal role={props.user?.role ?? ''} />
           </SidebarMenuItem>
-
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 />{props.userName}
+                  <User2 />{props.user?.displayName}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

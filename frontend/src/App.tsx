@@ -15,7 +15,7 @@ import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
 import WorkspaceStatsCard from './components/dashCard';
-import { ClipboardCopy } from 'lucide-react';
+import { ClipboardCopy, QrCode } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 
 // Interfaces
@@ -32,12 +32,12 @@ export interface Workspace {
   customUrl: string;
 }
 
-interface User {
+export interface User {
   _id: string;
   firebaseUid: string;
   email: string;
   displayName?: string;
-  photoURL?: string;
+  role?: string
 }
 
 const App: React.FC = () => {
@@ -518,7 +518,7 @@ const App: React.FC = () => {
               >
                 Entrar
               </Button>
-              <a href="/registrar" className='text-zinc-400 tracking-tight mt-1'>Não possui conta? <span className='font-semibold hover:underline text-zinc-100'>Registre-se</span></a>
+              <a href="/registrar" className='text-zinc-400 tracking-tight mt-2'>Não possui conta? <span className='font-semibold hover:underline text-zinc-100'>Registre-se</span></a>
             </div>
           </div>
 
@@ -532,7 +532,7 @@ const App: React.FC = () => {
 
     //login
     <div className='flex justify-between w-full'>
-      <AppSidebar logout={signOut} userName={user?.displayName ?? ''} />
+      <AppSidebar logout={signOut} user={user} />
       <SidebarTrigger className='md:hidden' />
       <main className="max-w-5xl w-full mx-auto mt-14 pr-6 md:px-6">
 
@@ -726,7 +726,7 @@ const App: React.FC = () => {
                         href={qrCodeUrl ?? ""}
                         download={`${selectedWorkspace.name}-qrcode.png`}
                       >
-                        <Button> Baixar QR Code</Button>
+                        <Button><QrCode /> Baixar QR Code</Button>
                       </a>
                     </div>
                   </div>
