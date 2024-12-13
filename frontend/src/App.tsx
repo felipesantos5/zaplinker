@@ -532,7 +532,10 @@ const App: React.FC = () => {
 
     //login
     <div className='flex justify-between w-full'>
-      <AppSidebar logout={signOut} user={user} />
+
+      {user && (
+        <AppSidebar logout={signOut} user={user} />
+      )}
       <SidebarTrigger className='md:hidden' />
       <main className="max-w-5xl w-full mx-auto mt-14 pr-6 md:px-6">
 
