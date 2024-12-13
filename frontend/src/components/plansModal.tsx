@@ -11,50 +11,54 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, X } from 'lucide-react'
 
+interface PlansModalProps {
+  role: string;
+}
+
 const plans = [
   {
-    name: 'Free',
+    title: 'Plano Básico',
+    name: 'free',
     price: 'R$0',
-    description: 'For individuals just starting out',
+    description: 'Ideal para iniciantes, com funcionalidades essenciais.',
     features: [
-      { name: 'Up to 10 redirects', included: true },
-      { name: 'Basic analytics', included: true },
-      { name: 'Community support', included: true },
-      { name: 'Custom domains', included: false },
-      { name: 'Advanced analytics', included: false },
-      { name: 'Priority support', included: false },
+      { name: '1 link', included: true },
+      { name: '2 números', included: true },
+      { name: 'Url personalizavel', included: false },
+      { name: 'Metricas de trafego', included: false },
+      { name: 'Personalização de UTMS', included: false },
     ],
   },
   {
-    name: 'Essential',
-    price: 'R$9.99',
-    description: 'For growing businesses',
+    title: 'Plano Pro',
+    name: 'pro',
+    price: 'R$30.00',
+    description: 'Para negócios em crescimento, com mais recursos.',
     features: [
-      { name: 'Up to 100 redirects', included: true },
-      { name: 'Basic analytics', included: true },
-      { name: 'Email support', included: true },
-      { name: 'Custom domains', included: true },
-      { name: 'Advanced analytics', included: false },
-      { name: 'Priority support', included: false },
+      { name: '5 links', included: true },
+      { name: '10 números', included: true },
+      { name: 'Url personalizavel', included: true },
+      { name: 'Metricas de trafego', included: true },
+      { name: 'Personalização de UTMS', included: false },
     ],
   },
   {
-    name: 'Pro',
-    price: 'R$29.99',
-    description: 'For power users and large teams',
+    title: 'Plano Premium',
+    name: 'premium',
+    price: 'R$130.00',
+    description: 'Completo e ilimitado para máxima flexibilidade.',
     features: [
-      { name: 'Unlimited redirects', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Priority support', included: true },
-      { name: 'Custom domains', included: true },
-      { name: 'API access', included: true },
-      { name: 'White-labeling', included: true },
+      { name: 'Links ilimitados', included: true },
+      { name: 'Sem limite de numeros', included: true },
+      { name: 'Url personalizavel', included: true },
+      { name: 'Metricas de trafego', included: true },
+      { name: 'Personalização de UTMS', included: true },
     ],
   },
-]
+];
 
-export default function PlansModal() {
-  const [open, setOpen] = useState(false)
+export default function PlansModal(props: PlansModalProps) {
+  const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -65,14 +69,19 @@ export default function PlansModal() {
         <DialogHeader>
           <DialogTitle className='text-2xl'>Escolha seu plano</DialogTitle>
           <DialogDescription>
-            Selecione o plano que melhor se adapta às suas necessidades. Você pode fazer upgrade ou downgrade a qualquer momento.
+            Selecione o plano que melhor se adapta às suas necessidades.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 md:grid-cols-3">
           {plans.map((plan) => (
             <Card key={plan.name} className="flex flex-col">
               <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
+                <CardTitle>
+                  {plan.title}
+                  {props.role === plan.name && (
+                    <span className="ml-2 text-sm text-green-500">(Plano Atual)</span>
+                  )}
+                </CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
@@ -91,13 +100,15 @@ export default function PlansModal() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full">{plan.name === 'Free' ? 'Get Started' : 'Subscribe'}</Button>
+                <Button className="w-full" disabled={props.role === plan.name}>
+                  {props.role === plan.name ? 'Plano Atual' : 'Assinar Agora'}
+                </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
