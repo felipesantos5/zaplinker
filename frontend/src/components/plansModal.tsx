@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, X } from 'lucide-react'
-import { link } from 'fs'
 
 interface PlansModalProps {
   role: string;
