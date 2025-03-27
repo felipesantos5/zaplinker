@@ -477,13 +477,22 @@ app.get("/api/whatsapp/:workspaceId", authMiddleware, async (req, res) => {
   }
 });
 
-app.set("trust proxy", true);
+const isSocialBot = (req) => {
+  const userAgent = req.headers["user-agent"] || "";
+  const bots = [/WhatsApp/i, /Discordbot/i, /TelegramBot/i, /Twitterbot/i, /LinkedInBot/i, /Facebookbot/i, /HeadlessChrome/i];
+  return bots.some((bot) => bot.test(userAgent));
+};
 
 // Adicione o índice único no modelo UniqueVisitor (coloque ANTES das definições de rota)
 Workspace.schema.index({ uniqueVisitors: 1 }, { unique: true, sparse: true });
 
 // Rota para redirecionamento baseada na URL personalizada do workspace
 app.get("/:customUrl", async (req, res) => {
+  if (isSocialBot(req)) {
+    console.log("aham");
+    return res.status(200).send("Social Media Preview"); // Não conta o acesso
+  }
+
   try {
     const { customUrl } = req.params;
     const now = new Date();
