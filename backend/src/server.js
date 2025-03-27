@@ -4,12 +4,49 @@ const cors = require("cors");
 const QRCode = require("qrcode");
 const useragent = require("express-useragent");
 const Workspace = require("./models/workspace.model");
+const cookieParser = require("cookie-parser"); // Adicione esta linha
+const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 require("dotenv").config();
 
 const app = express();
 app.use(cors());
+
+// Middlewares
+app.use(cookieParser());
 app.use(express.json());
 app.use(useragent.express());
+app.set("trust proxy", true);
+
+// Middleware de visitorId corrigido
+app.use((req, res, next) => {
+  try {
+    const visitorCookie = req.cookies.visitorId || uuidv4();
+    const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
+
+    // Verifica se o crypto está funcionando
+    if (!crypto || !crypto.createHash) {
+      throw new Error("Módulo crypto não carregado corretamente");
+    }
+
+    // Cria o hash de forma segura
+    const hash = crypto.createHash("sha256");
+    hash.update(`${visitorCookie}-${userIp}-${req.headers["user-agent"] || ""}`);
+    req.visitorId = hash.digest("hex");
+
+    res.cookie("visitorId", visitorCookie, {
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    next();
+  } catch (error) {
+    console.error("Erro no middleware de visitorId:", error);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
 
 const detectDeviceType = (req, res, next) => {
   const userAgent = req.headers["user-agent"] || "";
@@ -449,37 +486,69 @@ Workspace.schema.index({ uniqueVisitors: 1 }, { unique: true, sparse: true });
 app.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
+    const now = new Date();
     const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
     const deviceType = req.useragent.isMobile ? "mobile" : "desktop";
-    const now = new Date();
 
-    // 1. Atualiza o workspace com os dados de acesso
-    const workspace = await Workspace.findOneAndUpdate(
-      { customUrl },
+    // 1. Tentar atualizar visitante existente
+    const updateResult = await Workspace.findOneAndUpdate(
+      {
+        customUrl,
+        "visitors.visitorId": req.visitorId,
+      },
       {
         $inc: {
           accessCount: 1,
           [`${deviceType}AccessCount`]: 1,
+          "visitors.$.visitCount": 1,
         },
-        $addToSet: {
-          uniqueVisitors: userIp, // Adiciona IP apenas se não existir
+        $set: {
+          "visitors.$.lastVisit": now,
         },
         $push: {
           accessDetails: {
             timestamp: now,
             deviceType,
             ipAddress: userIp,
+            visitorId: req.visitorId,
           },
         },
       },
       { new: true }
     );
 
-    if (!workspace) {
-      return res.status(404).json({ message: "Workspace não encontrado" });
+    // 2. Se não encontrou o visitante, adicionar novo
+    if (!updateResult) {
+      await Workspace.findOneAndUpdate(
+        { customUrl },
+        {
+          $inc: {
+            accessCount: 1,
+            [`${deviceType}AccessCount`]: 1,
+          },
+          $push: {
+            visitors: {
+              visitorId: req.visitorId,
+              ip: userIp,
+              userAgent: req.headers["user-agent"],
+              firstVisit: now,
+              lastVisit: now,
+              visitCount: 1,
+            },
+            accessDetails: {
+              timestamp: now,
+              deviceType,
+              ipAddress: userIp,
+              visitorId: req.visitorId,
+            },
+          },
+        },
+        { new: true }
+      );
     }
 
-    // 2. Busca números ativos
+    // 3. Buscar números ativos e redirecionar
+    const workspace = await Workspace.findOne({ customUrl });
     const activeNumbers = await WhatsappNumber.find({
       workspaceId: workspace._id,
       isActive: true,
@@ -489,23 +558,16 @@ app.get("/:customUrl", async (req, res) => {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
-    // 3. Seleciona número aleatório
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
 
-    // 4. Atualiza estatísticas do número (não bloqueante)
     WhatsappNumber.findByIdAndUpdate(randomNumber._id, {
       $inc: { accessCount: 1 },
       $push: { accessTimes: now },
     }).catch(console.error);
 
-    // 5. Redireciona
     const textParam = randomNumber.text ? `?text=${encodeURIComponent(randomNumber.text)}` : "";
     res.redirect(`https://wa.me/${randomNumber.number}${textParam}`);
   } catch (error) {
-    if (error.code === 11000) {
-      // IP já existe, redireciona normalmente
-      return res.redirect(req.originalUrl);
-    }
     console.error("Erro:", error);
     res.status(500).json({
       message: "Erro no servidor",
