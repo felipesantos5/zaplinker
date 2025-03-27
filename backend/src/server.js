@@ -82,10 +82,19 @@ const Workspace = mongoose.model(
         type: Number,
         default: 0,
       },
-      uniqueVisitorCount: {
-        type: Number,
-        default: 0,
-      },
+      uniqueVisitors: [
+        {
+          ip: String,
+          firstVisit: Date,
+        },
+      ],
+      accessDetails: [
+        {
+          timestamp: Date,
+          deviceType: String,
+          ipAddress: String,
+        },
+      ],
     },
     {
       timestamps: true,
@@ -102,6 +111,7 @@ const WhatsappNumber = mongoose.model(
     text: String,
     isActive: { type: Boolean, default: true },
     accessCount: { type: Number, default: 0 },
+    accessTimes: [{ type: Date }], // Novo campo para registrar horários
   })
 );
 
@@ -429,28 +439,51 @@ app.get("/api/whatsapp/:workspaceId", authMiddleware, async (req, res) => {
   }
 });
 
+app.set("trust proxy", true);
+
+// Adicione o índice único no modelo UniqueVisitor (coloque ANTES das definições de rota)
+Workspace.schema.index({ "uniqueVisitors.ip": 1 }, { unique: true, sparse: true });
+
 // Rota para redirecionamento baseada na URL personalizada do workspace
 app.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
-    const userIp = req.ip;
+    const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
+    const deviceType = req.useragent.isMobile ? "mobile" : "desktop";
+    const now = new Date();
 
-    // Detectar tipo de dispositivo
-    const isMobile = req.useragent.isMobile;
-    const isDesktop = req.useragent.isDesktop;
+    // Atualização atômica principal
+    const result = await Workspace.findOneAndUpdate(
+      { customUrl },
+      {
+        $inc: {
+          accessCount: 1,
+          [deviceType + "AccessCount"]: 1,
+        },
+        $addToSet: {
+          uniqueVisitors: {
+            ip: userIp,
+            firstVisit: now,
+          },
+        },
+        $push: {
+          accessDetails: {
+            timestamp: now,
+            deviceType,
+            ipAddress: userIp,
+          },
+        },
+      },
+      { new: true, upsert: false }
+    );
 
-    console.log(`Mobile: ${isMobile}, Desktop: ${isDesktop}`);
-
-    // Verifica se o workspace existe
-    const workspace = await Workspace.findOne({ customUrl });
-
-    if (!workspace) {
+    if (!result) {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
-    // Seleciona números ativos
+    // Redirecionamento
     const activeNumbers = await WhatsappNumber.find({
-      workspaceId: workspace._id,
+      workspaceId: result._id,
       isActive: true,
     });
 
@@ -458,49 +491,29 @@ app.get("/:customUrl", async (req, res) => {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
-    // Verifica se é um visitante único
-    const existingVisitor = await UniqueVisitor.findOne({
-      workspaceId: workspace._id,
-      ipAddress: userIp,
-    });
-
-    if (!existingVisitor) {
-      // Se for um novo visitante, cria um registro
-      await UniqueVisitor.create({
-        workspaceId: workspace._id,
-        ipAddress: userIp,
-      });
-
-      // Incrementa o contador de visitantes únicos do workspace
-      await Workspace.updateOne({ _id: workspace._id }, { $inc: { uniqueVisitorCount: 1 } });
-    }
-
-    // Incrementa o contador de acessos do workspace
-    const updateQuery = {
-      $inc: {
-        accessCount: 1,
-        [isMobile ? "mobileAccessCount" : "desktopAccessCount"]: 1,
-      },
-    };
-    await Workspace.updateOne({ _id: workspace._id }, updateQuery);
-
-    // Escolhe um número aleatório para redirecionamento
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
 
-    // Incrementa a contagem de acessos para este número
-    await WhatsappNumber.findByIdAndUpdate(randomNumber._id, {
-      $inc: { accessCount: 1 },
-    });
+    // Atualização não crítica do número
+    WhatsappNumber.updateOne(
+      { _id: randomNumber._id },
+      {
+        $inc: { accessCount: 1 },
+        $push: { accessTimes: now },
+      }
+    ).catch(console.error);
 
-    const text = randomNumber.text ? encodeURIComponent(randomNumber.text) : "";
-    const whatsappUrl = text ? `http://wa.me/${randomNumber.number}?text=${text}&force=true` : `http://wa.me/${randomNumber.number}?force=true`;
-
-    res.redirect(whatsappUrl);
+    const textParam = randomNumber.text ? `?text=${encodeURIComponent(randomNumber.text)}` : "";
+    res.redirect(`https://wa.me/${randomNumber.number}${textParam}`);
   } catch (error) {
-    res.status(500).json({ message: "Erro no servidor", error: error.message });
+    if (error.code === 11000) {
+      // Duplicata detectada, simplesmente continue
+      console.log("Visitante único já registrado");
+      return res.redirect(req.originalUrl);
+    }
+    console.error("Erro:", error);
+    res.status(500).json({ message: "Erro no servidor" });
   }
 });
-
 // Rota para alternar o status de um número (atualizada para verificar o workspace)
 app.put("/api/whatsapp/:numberId/toggle", authMiddleware, async (req, res) => {
   try {
