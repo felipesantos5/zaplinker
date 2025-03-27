@@ -82,6 +82,10 @@ const Workspace = mongoose.model(
         type: Number,
         default: 0,
       },
+      uniqueVisitorCount: {
+        type: Number,
+        default: 0,
+      },
     },
     {
       timestamps: true,
@@ -98,6 +102,25 @@ const WhatsappNumber = mongoose.model(
     text: String,
     isActive: { type: Boolean, default: true },
     accessCount: { type: Number, default: 0 },
+  })
+);
+
+const UniqueVisitor = mongoose.model(
+  "UniqueVisitor",
+  new mongoose.Schema({
+    workspaceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Workspace",
+      required: true,
+    },
+    ipAddress: {
+      type: String,
+      required: true,
+    },
+    firstVisit: {
+      type: Date,
+      default: Date.now,
+    },
   })
 );
 
@@ -410,6 +433,7 @@ app.get("/api/whatsapp/:workspaceId", authMiddleware, async (req, res) => {
 app.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
+    const userIp = req.ip;
 
     // Detectar tipo de dispositivo
     const isMobile = req.useragent.isMobile;
@@ -434,11 +458,30 @@ app.get("/:customUrl", async (req, res) => {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
-    // Incrementa o contador de acessos do workspace após verificar números ativos
-    await Workspace.updateOne({ _id: workspace._id }, { $inc: { accessCount: 1 } });
+    // Verifica se é um visitante único
+    const existingVisitor = await UniqueVisitor.findOne({
+      workspaceId: workspace._id,
+      ipAddress: userIp,
+    });
 
-    // Incrementa acessos por tipo de dispositivo
-    const updateQuery = isMobile ? { $inc: { mobileAccessCount: 1 } } : { $inc: { desktopAccessCount: 1 } };
+    if (!existingVisitor) {
+      // Se for um novo visitante, cria um registro
+      await UniqueVisitor.create({
+        workspaceId: workspace._id,
+        ipAddress: userIp,
+      });
+
+      // Incrementa o contador de visitantes únicos do workspace
+      await Workspace.updateOne({ _id: workspace._id }, { $inc: { uniqueVisitorCount: 1 } });
+    }
+
+    // Incrementa o contador de acessos do workspace
+    const updateQuery = {
+      $inc: {
+        accessCount: 1,
+        [isMobile ? "mobileAccessCount" : "desktopAccessCount"]: 1,
+      },
+    };
     await Workspace.updateOne({ _id: workspace._id }, updateQuery);
 
     // Escolhe um número aleatório para redirecionamento
