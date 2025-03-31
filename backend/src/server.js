@@ -20,8 +20,8 @@ const prodCorsOptions = {
   optionsSuccessStatus: 200,
 };
 
-+app.use(cors(prodCorsOptions));
-+app.options("*", cors(prodCorsOptions));
+app.use(cors(prodCorsOptions));
+app.options("*", cors(prodCorsOptions));
 
 // Middlewares
 app.use(cookieParser());
