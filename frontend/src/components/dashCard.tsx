@@ -3,36 +3,30 @@ import axios from 'axios'
 import { Card } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { CalendarIcon, Globe, MapPin, Monitor, RefreshCw, Smartphone } from 'lucide-react'
+import { CalendarIcon, Globe, Monitor, RefreshCw, Smartphone } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { API_BASE_URL } from '@/constants/urlApi'
 import { Spinner } from './Spinner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import ReactCountryFlag from "react-country-flag"
+import { Workspace } from '@/types/workspace'
 
-interface Visitor {
-  visitorId: string;
-  ip: string;
-  userAgent: string;
-  visitCount: number;
-}
-
-interface WorkspaceStats {
-  _id: string
-  accessCount: number
-  desktopAccessCount: number
-  mobileAccessCount: number
-  accessDetails: Array<{
-    timestamp: string
-    deviceType: 'desktop' | 'mobile'
-    visitorId: string
-  }>
-  visitors: Visitor[];
-}
+// interface WorkspaceStats {
+//   _id: string
+//   accessCount: number
+//   desktopAccessCount: number
+//   mobileAccessCount: number
+//   accessDetails: Array<{
+//     timestamp: string
+//     deviceType: 'desktop' | 'mobile'
+//     visitorId: string
+//   }>
+//   visitors: Visitor[];
+// }
 
 export default function WorkspaceStatsCard(id: any) {
   const [timeRange, setTimeRange] = useState('7d')
-  const [data, setData] = useState<WorkspaceStats | null>(null)
+  const [data, setData] = useState<Workspace | null>(null)
   const [loading, setLoading] = useState(false)
 
   const fetchData = async () => {
@@ -296,19 +290,19 @@ export default function WorkspaceStatsCard(id: any) {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {/* <MapPin className="h-4 w-4 text-muted-foreground" /> */}
-                        {log.country === "desconhecido" &
-                          <ReactCountryFlag
-                            countryCode={log.country}
-                            svg
-                            style={{
-                              width: '1.5em',
-                              height: '1.5em',
-                              borderRadius: '3px',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                            }}
-                            title={log.country}
-                          />
-                        }
+                        {/* {log.country  & */}
+                        <ReactCountryFlag
+                          countryCode={log.country}
+                          svg
+                          style={{
+                            width: '1.5em',
+                            height: '1.5em',
+                            borderRadius: '3px',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                          }}
+                          title={log.country}
+                        />
+                        {/* } */}
                         {log.country || 'Desconhecido'}
                       </div>
                     </TableCell>

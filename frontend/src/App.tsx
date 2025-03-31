@@ -17,7 +17,6 @@ import { SidebarTrigger } from './components/ui/sidebar';
 import WorkspaceStatsCard from './components/dashCard';
 import { ClipboardCopy, QrCode } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
-import { Dashboard } from './components/dashboard';
 import { UTMEditor } from './components/UTMEditor';
 
 // Interfaces

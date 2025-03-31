@@ -25,6 +25,7 @@ interface AccessDetail {
   ipAddress: string;
   visitorId: string;
   country: string;
+  timestamp: any;
 }
 
 export interface Workspace {
