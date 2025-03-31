@@ -19,6 +19,13 @@ const workspaceSchema = new mongoose.Schema(
       maxlength: 35,
       match: /^[a-zA-Z0-9_-]+$/,
     },
+    utmParameters: {
+      utm_source: { type: String, default: null },
+      utm_medium: { type: String, default: null },
+      utm_campaign: { type: String, default: null },
+      utm_term: { type: String, default: null },
+      utm_content: { type: String, default: null },
+    },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     accessCount: { type: Number, default: 0 },
     desktopAccessCount: { type: Number, default: 0 },
