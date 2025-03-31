@@ -64,6 +64,7 @@ const App: React.FC = () => {
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -473,6 +474,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleMetrics = () => {
+    setMetrics(!metrics)
+    console.log(metrics)
+  }
+
+  const handleBreadCrumb = () => {
+    setIsConfiguring(false)
+    setMetrics(false)
+  }
+
   if (!firebaseUser && !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black w-full">
@@ -708,126 +719,129 @@ const App: React.FC = () => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 19L8 12L15 5" stroke={isDarkMode ? 'white' : 'black'} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <a onClick={() => setIsConfiguring(false)} className="cursor-pointer hover:underline font-bo">Voltar</a>
+              <a onClick={handleBreadCrumb} className="cursor-pointer hover:underline font-bo">Voltar</a>
             </div>
 
             {selectedWorkspace && (
+
               <>
-                <section className='flex flex-col mb-10'>
-                  <div className='mb-6'>
-                    {user?.role !== 'free' && <WorkspaceStatsCard id={selectedWorkspace._id} />}
-                  </div>
+                {metrics ? <WorkspaceStatsCard id={selectedWorkspace?._id} /> :
+                  <section className='flex flex-col mb-10'>
 
-                  <Dashboard id={selectedWorkspace._id} />
-
-                  <div className='flex items-center justify-between mb-16 '>
-                    <h2 className="text-5xl font-bold text-zinc-800capitalize">{selectedWorkspace.name}</h2>
-                    <div className="flex gap-3">
-                      <UTMEditor workspaceId={selectedWorkspace._id} userId={firebaseUser?.uid} />
-                      <a
-                        href={qrCodeUrl ?? ""}
-                        download={`${selectedWorkspace.name}-qrcode.png`}
-                      >
-                        <Button><QrCode /> Baixar QR Code</Button>
-                      </a>
-                    </div>
-                  </div>
-                  <form onSubmit={handleSubmit}>
-
-                    <div className="flex flex-col gap-4 mb-4">
-                      <div className='flex flex-col gap-2'>
-                        <label htmlFor="">Número <span className='text-xs'>*</span></label>
-                        <Input
-                          type="text"
-                          value={number}
-                          onChange={(e) => setNumber(e.target.value)}
-                          placeholder="Número do WhatsApp (ex: 48991319311)"
-                          required
-
-                        />
-                      </div>
-                      <div className='flex flex-col gap-2'>
-                        <label htmlFor="">Mensagem</label>
-                        <Input
-                          type="text"
-                          value={text}
-                          onChange={(e) => setText(e.target.value)}
-                          placeholder="Texto (opcional)"
-                        />
+                    <div className='flex items-center justify-between mb-16 '>
+                      <h2 className="text-5xl font-bold text-zinc-800capitalize">{selectedWorkspace.name}</h2>
+                      <div className="flex gap-3">
+                        {user?.role !== 'free' &&
+                          <Button onClick={handleMetrics}>
+                            metricas
+                          </Button>
+                        }
+                        <UTMEditor workspaceId={selectedWorkspace._id} userId={firebaseUser?.uid} />
+                        <a
+                          href={qrCodeUrl ?? ""}
+                          download={`${selectedWorkspace.name}-qrcode.png`}
+                        >
+                          <Button><QrCode /> Baixar QR Code</Button>
+                        </a>
                       </div>
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full h-10"
-                    >
-                      Adicionar
-                    </Button>
-                  </form>
-                  <div className="border p-4 rounded-xl mt-6">
-                    <p className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">URL personalizada do workspace:</p>
-                    <div className="flex items-center gap-4">
-                      <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} className='w-full'>
-                        <Input
-                          ref={inputRef}
-                          type="text"
-                          readOnly
-                          value={`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
-                          className='pointer-events-none'
-                        />
-                      </a>
+                    <form onSubmit={handleSubmit}>
+
+                      <div className="flex flex-col gap-4 mb-4">
+                        <div className='flex flex-col gap-2'>
+                          <label htmlFor="">Número <span className='text-xs'>*</span></label>
+                          <Input
+                            type="text"
+                            value={number}
+                            onChange={(e) => setNumber(e.target.value)}
+                            placeholder="Número do WhatsApp (ex: 48991319311)"
+                            required
+
+                          />
+                        </div>
+                        <div className='flex flex-col gap-2'>
+                          <label htmlFor="">Mensagem</label>
+                          <Input
+                            type="text"
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            placeholder="Texto (opcional)"
+                          />
+                        </div>
+                      </div>
                       <Button
-                        onClick={handleCopy}
-                        className='flex gap-2 items-center'
+                        type="submit"
+                        className="w-full h-10"
                       >
-                        <ClipboardCopy /> {isCopied ? 'URL copiada' : 'Copiar URL'}
+                        Adicionar
                       </Button>
-                    </div>
-                  </div>
-
-                  <div className=' border p-4 rounded-xl mt-10'>
-                    {isLoadingNumbers ? (
-                      <div className="flex justify-center items-center w-full h-full">
-                        <Spinner />
+                    </form>
+                    <div className="border p-4 rounded-xl mt-6">
+                      <p className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">URL personalizada do workspace:</p>
+                      <div className="flex items-center gap-4">
+                        <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} className='w-full'>
+                          <Input
+                            ref={inputRef}
+                            type="text"
+                            readOnly
+                            value={`${API_BASE_URL}/${selectedWorkspace.customUrl}`}
+                            className='pointer-events-none'
+                          />
+                        </a>
+                        <Button
+                          onClick={handleCopy}
+                          className='flex gap-2 items-center'
+                        >
+                          <ClipboardCopy /> {isCopied ? 'URL copiada' : 'Copiar URL'}
+                        </Button>
                       </div>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[250px]">Número</TableHead>
-                            <TableHead>Mensagem</TableHead>
-                            <TableHead className='text-right'>Status</TableHead>
-                            <TableHead className='text-right'>Deletar</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {numbers.map((num) => (
-                            <TableRow key={num._id}>
-                              <TableCell className="font-medium">{num.number}</TableCell>
-                              <TableCell>{num.text || 'Sem texto'}</TableCell>
-                              <TableCell className='text-right'>
-                                <Switch
-                                  checked={num.isActive}
-                                  onCheckedChange={() => toggleNumberStatus(num._id, num.isActive)}
-                                />
-                              </TableCell>
-                              <TableCell className='text-right pr-4'>
-                                <button
-                                  onClick={() => deleteNumber(num._id)}
-                                >
-                                  <FiTrash2 size={'20px'} />
-                                </button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </div>
-                </section>
+                    </div>
 
+                    <div className=' border p-4 rounded-xl mt-10'>
+                      {isLoadingNumbers ? (
+                        <div className="flex justify-center items-center w-full h-full">
+                          <Spinner />
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[250px]">Número</TableHead>
+                              <TableHead>Mensagem</TableHead>
+                              <TableHead className='text-right'>Status</TableHead>
+                              <TableHead className='text-right'>Deletar</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {numbers.map((num) => (
+                              <TableRow key={num._id}>
+                                <TableCell className="font-medium">{num.number}</TableCell>
+                                <TableCell>{num.text || 'Sem texto'}</TableCell>
+                                <TableCell className='text-right'>
+                                  <Switch
+                                    checked={num.isActive}
+                                    onCheckedChange={() => toggleNumberStatus(num._id, num.isActive)}
+                                  />
+                                </TableCell>
+                                <TableCell className='text-right pr-4'>
+                                  <button
+                                    onClick={() => deleteNumber(num._id)}
+                                  >
+                                    <FiTrash2 size={'20px'} />
+                                  </button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </div>
+                  </section>
+                }
 
               </>
             )}
+
           </div>
         )}
       </main >
