@@ -25,16 +25,13 @@ const WorkspaceStatsCard: React.FC<WorkspaceStatsCardProps> = ({ id }) => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        console.log(`Carregando estatísticas para o ID: ${id}`);
         const data = await fetchWorkspaceStats(id);
         setStats(data);
-        console.log(data);
       } catch (err) {
         console.error('Erro ao carregar estatísticas:', err);
         setError('Erro ao carregar estatísticas');
       } finally {
         setLoading(false);
-        console.log('Dados carregados:', stats);
       }
     };
 

@@ -17,6 +17,8 @@ import { SidebarTrigger } from './components/ui/sidebar';
 import WorkspaceStatsCard from './components/dashCard';
 import { ClipboardCopy, QrCode } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
+import { Dashboard } from './components/dashboard';
+import { UTMEditor } from './components/UTMEditor';
 
 // Interfaces
 interface WhatsappNumber {
@@ -60,6 +62,7 @@ const App: React.FC = () => {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [numberStats, setNumberStats] = useState<{ number: string; accessCount: number }[]>([]);
 
@@ -91,7 +94,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (selectedWorkspace) {
       axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/numbers/stats`)
-        .then(response => setNumberStats(response.data))
+        .then(response => { setNumberStats(response.data); })
         .catch(error => console.error("Erro ao buscar estatísticas dos números:", error));
       axios.get(`${API_BASE_URL}/api/workspace/:id/qrcode`)
         .then(response => setNumberStats(response.data))
@@ -139,7 +142,6 @@ const App: React.FC = () => {
       });
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      console.log(numberStats)
     }
   };
 
@@ -433,8 +435,6 @@ const App: React.FC = () => {
     }
   };
 
-
-
   const handleCopy = () => {
     // Seleciona o texto do input
     if (inputRef.current) {
@@ -442,6 +442,7 @@ const App: React.FC = () => {
       inputRef.current.setSelectionRange(0, 99999); // Para dispositivos móveis
 
       // Copia o texto selecionado
+      setIsCopied(true)
       navigator.clipboard.writeText(inputRef.current.value)
     }
   };
@@ -718,9 +719,12 @@ const App: React.FC = () => {
                     {user?.role !== 'free' && <WorkspaceStatsCard id={selectedWorkspace._id} />}
                   </div>
 
+                  <Dashboard id={selectedWorkspace._id} />
+
                   <div className='flex items-center justify-between mb-16 '>
                     <h2 className="text-5xl font-bold text-zinc-800capitalize">{selectedWorkspace.name}</h2>
-                    <div className="">
+                    <div className="flex gap-3">
+                      <UTMEditor workspaceId={selectedWorkspace._id} userId={firebaseUser?.uid} />
                       <a
                         href={qrCodeUrl ?? ""}
                         download={`${selectedWorkspace.name}-qrcode.png`}
@@ -776,7 +780,7 @@ const App: React.FC = () => {
                         onClick={handleCopy}
                         className='flex gap-2 items-center'
                       >
-                        <ClipboardCopy /> Copiar URL
+                        <ClipboardCopy /> {isCopied ? 'URL copiada' : 'Copiar URL'}
                       </Button>
                     </div>
                   </div>
