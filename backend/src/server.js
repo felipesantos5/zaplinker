@@ -1,27 +1,28 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const QRCode = require("qrcode");
-const useragent = require("express-useragent");
-const Workspace = require("./models/workspace.model");
-const cookieParser = require("cookie-parser"); // Adicione esta linha
-const { v4: uuidv4 } = require("uuid");
-const crypto = require("crypto");
-require("dotenv").config();
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import QRCode from "qrcode";
+import useragent from "express-useragent";
+import Workspace from "./models/workspace.model.js";
+import cookieParser from "cookie-parser";
+import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
+import "dotenv/config";
+import { getCountryFromIP } from "./helper/getCountryFromIP.js";
 
 const app = express();
 
-const prodCorsOptions = {
-  origin: ["*"],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
-  optionsSuccessStatus: 200,
-};
+// const prodCorsOptions = {
+//   origin: ["http://localhost:5173/"],
+//   credentials: true,
+//   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
+//   optionsSuccessStatus: 200,
+// };
 
-app.use(cors(prodCorsOptions));
+app.use(cors());
 
-app.options("*", cors(prodCorsOptions));
+// app.options("*", cors(prodCorsOptions));
 
 // Middlewares
 app.use(cookieParser());
@@ -557,7 +558,6 @@ Workspace.schema.index({ uniqueVisitors: 1 }, { unique: true, sparse: true });
 // Rota para redirecionamento baseada na URL personalizada do workspace
 app.get("/:customUrl", async (req, res) => {
   if (isSocialBot(req)) {
-    console.log("aham");
     return res.status(200).send("Social Media Preview"); // Não conta o acesso
   }
 
@@ -566,6 +566,8 @@ app.get("/:customUrl", async (req, res) => {
     const now = new Date();
     const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
     const deviceType = req.useragent.isMobile ? "mobile" : "desktop";
+
+    const country = await getCountryFromIP(userIp);
 
     // 1. Tentar atualizar visitante existente
     const updateResult = await Workspace.findOneAndUpdate(
@@ -588,6 +590,7 @@ app.get("/:customUrl", async (req, res) => {
             deviceType,
             ipAddress: userIp,
             visitorId: req.visitorId,
+            country,
           },
         },
       },
@@ -617,6 +620,7 @@ app.get("/:customUrl", async (req, res) => {
               deviceType,
               ipAddress: userIp,
               visitorId: req.visitorId,
+              country,
             },
           },
         },

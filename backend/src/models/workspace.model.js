@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const visitorSchema = new mongoose.Schema({
   visitorId: { type: String, required: true }, // Hash único (cookie + IP)
@@ -7,6 +7,7 @@ const visitorSchema = new mongoose.Schema({
   firstVisit: { type: Date, default: Date.now },
   lastVisit: { type: Date, default: Date.now },
   visitCount: { type: Number, default: 1 },
+  country: { type: String },
 });
 
 const workspaceSchema = new mongoose.Schema(
@@ -37,6 +38,7 @@ const workspaceSchema = new mongoose.Schema(
         deviceType: { type: String, enum: ["mobile", "desktop"] },
         ipAddress: String,
         visitorId: String,
+        country: String,
       },
     ],
   },
@@ -56,5 +58,4 @@ workspaceSchema.virtual("uniqueVisitorCount").get(function () {
   return this.visitors.length;
 });
 
-const Workspace = mongoose.model("Workspace", workspaceSchema);
-module.exports = Workspace;
+export default mongoose.model("Workspace", workspaceSchema);
