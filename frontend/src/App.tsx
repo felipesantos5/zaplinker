@@ -64,7 +64,6 @@ const App: React.FC = () => {
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-  const [numberStats, setNumberStats] = useState<{ number: string; accessCount: number }[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -91,16 +90,16 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (selectedWorkspace) {
-      axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/numbers/stats`)
-        .then(response => { setNumberStats(response.data); })
-        .catch(error => console.error("Erro ao buscar estatísticas dos números:", error));
-      axios.get(`${API_BASE_URL}/api/workspace/:id/qrcode`)
-        .then(response => setNumberStats(response.data))
-        .catch(error => console.error("Erro ao buscar o qr code", error));
-    }
-  }, [selectedWorkspace]);
+  // useEffect(() => {
+  //   if (selectedWorkspace) {
+  //     axios.get(`${API_BASE_URL}/api/workspaces/${selectedWorkspace._id}/numbers/stats`)
+  //       .then(response => { setNumberStats(response.data); })
+  //       .catch(error => console.error("Erro ao buscar estatísticas dos números:", error));
+  //     axios.get(`${API_BASE_URL}/api/workspace/:id/qrcode`)
+  //       .then(response => setNumberStats(response.data))
+  //       .catch(error => console.error("Erro ao buscar o qr code", error));
+  //   }
+  // }, [selectedWorkspace]);
 
   const fetchWorkspaces = async (userId: string) => {
     try {

@@ -192,34 +192,34 @@ export const Dashboard = ({ id }: any) => {
 };
 
 
-const filterDataByTimeRange = (data: WorkspaceData, range: TimeRange): WorkspaceData => {
-  const now = new Date();
-  let startDate: Date;
+// const filterDataByTimeRange = (data: WorkspaceData, range: TimeRange): WorkspaceData => {
+//   const now = new Date();
+//   let startDate: Date;
 
-  switch (range) {
-    case '7d':
-      startDate = new Date(now.setDate(now.getDate() - 7));
-      break;
-    case '30days':
-      startDate = new Date(now.setDate(now.getDate() - 30));
-      break;
-    case '3months':
-      startDate = new Date(now.setMonth(now.getMonth() - 3));
-      break;
-    default:
-      startDate = new Date(0); // From the beginning of time
-  }
+//   switch (range) {
+//     case '7d':
+//       startDate = new Date(now.setDate(now.getDate() - 7));
+//       break;
+//     case '30days':
+//       startDate = new Date(now.setDate(now.getDate() - 30));
+//       break;
+//     case '3months':
+//       startDate = new Date(now.setMonth(now.getMonth() - 3));
+//       break;
+//     default:
+//       startDate = new Date(0); // From the beginning of time
+//   }
 
-  const filteredAccesses = data.accesses?.filter(access => new Date(access.timestamp) >= startDate) || [];
+//   const filteredAccesses = data.accesses?.filter(access => new Date(access.timestamp) >= startDate) || [];
 
-  return {
-    ...data,
-    accesses: filteredAccesses,
-    stats: {
-      totalAccesses: filteredAccesses.length,
-      uniqueVisitors: new Set(filteredAccesses.map(access => access.ipAddress)).size,
-      mobileAccesses: filteredAccesses.filter(access => access.deviceType === 'mobile').length,
-      desktopAccesses: filteredAccesses.filter(access => access.deviceType === 'desktop').length,
-    }
-  };
-};
+//   return {
+//     ...data,
+//     accesses: filteredAccesses,
+//     stats: {
+//       totalAccesses: filteredAccesses.length,
+//       uniqueVisitors: new Set(filteredAccesses.map(access => access.ipAddress)).size,
+//       mobileAccesses: filteredAccesses.filter(access => access.deviceType === 'mobile').length,
+//       desktopAccesses: filteredAccesses.filter(access => access.deviceType === 'desktop').length,
+//     }
+//   };
+// };
