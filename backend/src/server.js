@@ -13,16 +13,15 @@ import { getCountryFromIP } from "./helper/getCountryFromIP.js";
 const app = express();
 
 const prodCorsOptions = {
-  origin: ["https://app.zaplinker.com/", "app.zaplinker.com"],
+  origin: ["https://app.zaplinker.com/"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
   optionsSuccessStatus: 200,
 };
 
-app.use(cors());
-
-app.options("*", cors(prodCorsOptions));
++app.use(cors(prodCorsOptions));
++app.options("*", cors(prodCorsOptions));
 
 // Middlewares
 app.use(cookieParser());
@@ -759,9 +758,9 @@ app.get("/api/workspace/:id/qrcode", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.redirect("https://use.zaplinker.com");
-});
+// app.get("/", (req, res) => {
+//   res.redirect("https://use.zaplinker.com");
+// });
 
 const PORT = process.env.PORT || 5000;
 
