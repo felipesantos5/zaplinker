@@ -10,7 +10,16 @@ const crypto = require("crypto");
 require("dotenv").config();
 
 const app = express();
-app.use(cors());
+
+const prodCorsOptions = {
+  origin: ["https://zaplinker.com/", "https://app.zaplinker.com/"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID"],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(prodCorsOptions));
 
 // Middlewares
 app.use(cookieParser());
