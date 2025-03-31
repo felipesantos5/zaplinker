@@ -3,9 +3,10 @@ import axios from 'axios'
 import { Card } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { CalendarIcon, DownloadIcon, RefreshCw } from 'lucide-react'
+import { CalendarIcon, RefreshCw } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { API_BASE_URL } from '@/constants/urlApi'
+import { Spinner } from './Spinner'
 
 interface Visitor {
   visitorId: string;
@@ -30,7 +31,7 @@ interface WorkspaceStats {
 export default function WorkspaceStatsCard(id: any) {
   const [timeRange, setTimeRange] = useState('7d')
   const [data, setData] = useState<WorkspaceStats | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -49,7 +50,7 @@ export default function WorkspaceStatsCard(id: any) {
   }, [timeRange])
 
   // Processar dados filtrados
-  const { filteredData, totals, chartData } = useMemo(() => {
+  const { totals, chartData } = useMemo(() => {
     if (!data) return { filteredData: [], totals: null, chartData: [] }
 
     // Calcular intervalo de datas
@@ -105,9 +106,14 @@ export default function WorkspaceStatsCard(id: any) {
 
   if (!data) return <div className="p-4">Carregando...</div>
 
+  if (loading) return (
+    <div className="flex justify-center items-center w-full h-full">
+      <Spinner />
+    </div>
+  )
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <h1 className="text-2xl font-bold text-primary">Estatísticas de Acesso</h1>
 
