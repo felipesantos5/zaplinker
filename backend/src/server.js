@@ -239,7 +239,7 @@ app.post("/api/user", async (req, res) => {
 
 // Nova rota para criar um workspace
 app.post("/api/workspace", authMiddleware, async (req, res) => {
-  const { customUrl, name } = req.body;
+  const { customUrl, name, utmParameters = {} } = req.body;
 
   if (!customUrl || !name) {
     return res.status(400).json({ message: "URL personalizada e nome são obrigatórios" });
@@ -262,12 +262,18 @@ app.post("/api/workspace", authMiddleware, async (req, res) => {
       userId: req.user._id,
       customUrl,
       name,
+      utmParameters,
     });
+
     await newWorkspace.save();
 
     res.status(201).json({ message: "Workspace criado com sucesso", workspace: newWorkspace });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao criar workspace", error: error.message });
+    res.status(500).json({
+      message: "Erro ao criar workspace",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 });
 
@@ -285,27 +291,10 @@ app.get("/api/workspaces", authMiddleware, async (req, res) => {
 app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, customUrl } = req.body;
+    const { name, customUrl, utmParameters } = req.body;
+    const updates = {};
 
-    // Validar campos obrigatórios
-    if (!name || !customUrl) {
-      return res.status(400).json({ message: "Nome e URL personalizada são obrigatórios" });
-    }
-
-    if (name.length > 25) {
-      return res.status(400).json({ message: "Nome do workspace invalido, maximo de 25 caracteres" });
-    }
-    if (customUrl.length > 35) {
-      return res.status(400).json({ message: "URL personalizada invalido, maximo de 30 caracteres" });
-    }
-
-    // Validar o formato da URL personalizada
-    const urlRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!urlRegex.test(customUrl)) {
-      return res.status(400).json({ message: "Formato de URL inválido" });
-    }
-
-    // Verificar se o workspace pertence ao usuário
+    // Verificar existência do workspace
     const workspace = await Workspace.findOne({
       _id: id,
       userId: req.user._id,
@@ -315,26 +304,76 @@ app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
-    // Verificar se a nova URL personalizada já está em uso por outro workspace
-    const existingWorkspace = await Workspace.findOne({
-      customUrl: customUrl,
-      _id: { $ne: id },
-    });
-
-    if (existingWorkspace) {
-      return res.status(409).json({ message: "URL personalizada já está em uso" });
+    // Atualizar nome (se fornecido)
+    if (name !== undefined) {
+      if (name.length > 25) {
+        return res.status(400).json({
+          message: "Nome excede o limite de 25 caracteres",
+        });
+      }
+      updates.name = name;
     }
 
-    // Atualizar o workspace
-    workspace.name = name;
-    workspace.customUrl = customUrl;
-    await workspace.save();
+    // Atualizar URL customizada (se fornecido)
+    if (customUrl !== undefined) {
+      const urlRegex = /^[a-zA-Z0-9_-]+$/;
+
+      if (customUrl.length > 35) {
+        return res.status(400).json({
+          message: "URL excede o limite de 35 caracteres",
+        });
+      }
+
+      if (!urlRegex.test(customUrl)) {
+        return res.status(400).json({ message: "Formato de URL inválido" });
+      }
+
+      const existingWorkspace = await Workspace.findOne({
+        customUrl,
+        _id: { $ne: id },
+      });
+
+      if (existingWorkspace) {
+        return res.status(409).json({ message: "URL já está em uso" });
+      }
+
+      updates.customUrl = customUrl;
+    }
+
+    // Atualizar UTM Parameters (merge parcial)
+    if (utmParameters !== undefined) {
+      const validUtmFields = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+
+      const mergedUtm = { ...workspace.utmParameters };
+
+      validUtmFields.forEach((field) => {
+        if (utmParameters[field] !== undefined) {
+          mergedUtm[field] = utmParameters[field];
+        }
+      });
+
+      updates.utmParameters = mergedUtm;
+    }
+
+    // Aplicar atualizações
+    const updatedWorkspace = await Workspace.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
 
     res.json({
       message: "Workspace atualizado com sucesso",
-      workspace,
+      workspace: updatedWorkspace,
     });
   } catch (error) {
+    // Tratar erros de validação do Mongoose
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((val) => val.message);
+      return res.status(400).json({ message: messages.join(", ") });
+    }
+
+    // Tratar erros de duplicidade (caso race condition na URL)
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "URL já está em uso" });
+    }
+
     res.status(500).json({
       message: "Erro ao atualizar workspace",
       error: error.message,
@@ -379,39 +418,57 @@ app.get("/api/workspaces/:id/stats", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validar o ID para garantir que é um ObjectId válido
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "ID inválido" });
     }
 
-    // Usar findById para buscar apenas um documento
-    const workspace = await Workspace.findById(id);
+    const workspace = await Workspace.findById(id)
+      .select("-__v -userId") // Remove campos internos e sensíveis
+      .lean();
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
-    // Buscar números de WhatsApp associados ao workspace
-    const numbers = await WhatsappNumber.find({ workspaceId: workspace._id });
+    // Buscar números associados se ainda necessário
+    const numbers = await WhatsappNumber.find({ workspaceId: id }).select("desktopAccessCount mobileAccessCount").lean();
 
-    let desktopAccessCount = 0;
-    let mobileAccessCount = 0;
+    // Formatar a resposta incluindo todos os dados relevantes
+    const response = {
+      ...workspace,
+      utmParameters: {
+        ...workspace.utmParameters,
+        // Garante que campos nulos não sejam enviados como null
+        utm_campaign: workspace.utmParameters.utm_campaign || undefined,
+        utm_term: workspace.utmParameters.utm_term || undefined,
+        utm_content: workspace.utmParameters.utm_content || undefined,
+      },
+      statistics: {
+        totalAccess: workspace.accessCount,
+        uniqueVisitors: workspace.uniqueVisitorCount,
+        devices: {
+          desktop: workspace.desktopAccessCount,
+          mobile: workspace.mobileAccessCount,
+        },
+        linkedNumbers: numbers.length,
+        lastUpdated: workspace.updatedAt,
+      },
+      visitors: workspace.visitors.map((v) => ({
+        ...v,
+        _id: undefined, // Remove o _id interno dos visitantes
+      })),
+      accessDetails: workspace.accessDetails.map((ad) => ({
+        ...ad,
+        _id: undefined, // Remove o _id interno dos detalhes de acesso
+      })),
+    };
 
-    numbers.forEach((number) => {
-      desktopAccessCount += number.desktopAccessCount || 0;
-      mobileAccessCount += number.mobileAccessCount || 0;
-    });
-
-    // Retornar apenas dados do workspace específico
-    res.json({
-      _id: workspace._id,
-      customUrl: workspace.customUrl,
-      accessCount: workspace.accessCount,
-      desktopAccessCount: workspace.desktopAccessCount,
-      mobileAccessCount: workspace.mobileAccessCount,
-    });
+    res.json(response);
   } catch (error) {
-    res.status(500).json({ message: "Erro no servidor", error: error.message });
+    res.status(500).json({
+      message: "Erro no servidor",
+      error: error.message,
+    });
   }
 });
 
@@ -563,19 +620,45 @@ app.get("/:customUrl", async (req, res) => {
       isActive: true,
     });
 
+    const utmParams = [];
+    for (const [key, value] of Object.entries(workspace.utmParameters)) {
+      if (value) utmParams.push(`${key}=${encodeURIComponent(value)}`);
+    }
+
     if (activeNumbers.length === 0) {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
 
+    // Construir parâmetros da URL
+    const urlParams = new URLSearchParams();
+
+    // Parâmetro obrigatório do WhatsApp
+    urlParams.append("phone", randomNumber.number);
+
+    // Adicionar texto se existir
+    if (randomNumber.text) {
+      urlParams.append("text", randomNumber.text);
+    }
+
+    // Adicionar UTM Parameters do Workspace
+    if (workspace.utmParameters) {
+      Object.entries(workspace.utmParameters).forEach(([key, value]) => {
+        if (value) urlParams.append(key, value);
+      });
+    }
+
+    // Construir URL final
+    const whatsappUrl = `https://api.whatsapp.com/send?${urlParams.toString()}`;
+
+    // Atualizar estatísticas
     WhatsappNumber.findByIdAndUpdate(randomNumber._id, {
       $inc: { accessCount: 1 },
       $push: { accessTimes: now },
     }).catch(console.error);
 
-    const textParam = randomNumber.text ? `?text=${encodeURIComponent(randomNumber.text)}` : "";
-    res.redirect(`https://wa.me/${randomNumber.number}${textParam}`);
+    res.redirect(whatsappUrl);
   } catch (error) {
     console.error("Erro:", error);
     res.status(500).json({
