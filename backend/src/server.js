@@ -21,6 +21,8 @@ const prodCorsOptions = {
 
 app.use(cors(prodCorsOptions));
 
+app.options("*", cors(prodCorsOptions));
+
 // Middlewares
 app.use(cookieParser());
 app.use(express.json());
