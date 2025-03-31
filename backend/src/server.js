@@ -12,10 +12,10 @@ require("dotenv").config();
 const app = express();
 
 const prodCorsOptions = {
-  origin: ["https://zaplinker.com/", "https://app.zaplinker.com/"],
+  origin: ["*"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
   optionsSuccessStatus: 200,
 };
 
