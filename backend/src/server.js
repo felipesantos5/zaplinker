@@ -12,17 +12,17 @@ import { getCountryFromIP } from "./helper/getCountryFromIP.js";
 
 const app = express();
 
-// const prodCorsOptions = {
-//   origin: ["http://localhost:5173/"],
-//   credentials: true,
-//   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
-//   optionsSuccessStatus: 200,
-// };
+const prodCorsOptions = {
+  origin: ["https://app.zaplinker.com/", "app.zaplinker.com"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
+  optionsSuccessStatus: 200,
+};
 
 app.use(cors());
 
-// app.options("*", cors(prodCorsOptions));
+app.options("*", cors(prodCorsOptions));
 
 // Middlewares
 app.use(cookieParser());
@@ -30,35 +30,34 @@ app.use(express.json());
 app.use(useragent.express());
 app.set("trust proxy", true);
 
-// Middleware de visitorId corrigido
-// app.use((req, res, next) => {
-//   try {
-//     const visitorCookie = req.cookies.visitorId || uuidv4();
-//     const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
+app.use((req, res, next) => {
+  try {
+    const visitorCookie = req.cookies.visitorId || uuidv4();
+    const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
 
-//     // Verifica se o crypto está funcionando
-//     if (!crypto || !crypto.createHash) {
-//       throw new Error("Módulo crypto não carregado corretamente");
-//     }
+    // Verifica se o crypto está funcionando
+    if (!crypto || !crypto.createHash) {
+      throw new Error("Módulo crypto não carregado corretamente");
+    }
 
-//     // Cria o hash de forma segura
-//     const hash = crypto.createHash("sha256");
-//     hash.update(`${visitorCookie}-${userIp}-${req.headers["user-agent"] || ""}`);
-//     req.visitorId = hash.digest("hex");
+    // Cria o hash de forma segura
+    const hash = crypto.createHash("sha256");
+    hash.update(`${visitorCookie}-${userIp}-${req.headers["user-agent"] || ""}`);
+    req.visitorId = hash.digest("hex");
 
-//     res.cookie("visitorId", visitorCookie, {
-//       maxAge: 365 * 24 * 60 * 60 * 1000,
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production",
-//       sameSite: "lax",
-//     });
+    res.cookie("visitorId", visitorCookie, {
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
 
-//     next();
-//   } catch (error) {
-//     console.error("Erro no middleware de visitorId:", error);
-//     res.status(500).send("Erro interno do servidor");
-//   }
-// });
+    next();
+  } catch (error) {
+    console.error("Erro no middleware de visitorId:", error);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
 
 const detectDeviceType = (req, res, next) => {
   const userAgent = req.headers["user-agent"] || "";
