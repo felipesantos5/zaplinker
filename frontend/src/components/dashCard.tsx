@@ -3,10 +3,12 @@ import axios from 'axios'
 import { Card } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { CalendarIcon, RefreshCw } from 'lucide-react'
+import { CalendarIcon, Globe, MapPin, Monitor, RefreshCw, Smartphone } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { API_BASE_URL } from '@/constants/urlApi'
 import { Spinner } from './Spinner'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
+import ReactCountryFlag from "react-country-flag"
 
 interface Visitor {
   visitorId: string;
@@ -249,6 +251,90 @@ export default function WorkspaceStatsCard(id: any) {
           </div>
         </Card>
       </div>
+
+      <Card className="p-6 mt-8">
+        <div className="mb-4 flex items-center gap-2">
+          <Globe className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-xl font-semibold">Histórico de Acessos</h2>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Data/Hora</TableHead>
+              <TableHead>IP</TableHead>
+              <TableHead>Localização</TableHead>
+              <TableHead>Dispositivo</TableHead>
+              <TableHead className="text-right">Visitante</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {data.accessDetails
+              .sort((a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+              )
+              .map((log, index) => {
+                const logDate = new Date(log.timestamp)
+                const formattedDate = logDate.toLocaleDateString('pt-BR')
+                const formattedTime = logDate.toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+
+                return (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{formattedDate}</span>
+                        <span className="text-sm text-muted-foreground">{formattedTime}</span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>{log.ipAddress}</TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {/* <MapPin className="h-4 w-4 text-muted-foreground" /> */}
+                        {log.country === "desconhecido" &
+                          <ReactCountryFlag
+                            countryCode={log.country}
+                            svg
+                            style={{
+                              width: '1.5em',
+                              height: '1.5em',
+                              borderRadius: '3px',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                            }}
+                            title={log.country}
+                          />
+                        }
+                        {log.country || 'Desconhecido'}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {log.deviceType === 'desktop' ? (
+                          <Monitor className="h-4 w-4 text-blue-500" />
+                        ) : (
+                          <Smartphone className="h-4 w-4 text-green-500" />
+                        )}
+                        <span className="capitalize">{log.deviceType}</span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right font-mono text-sm">
+                      <span className="text-muted-foreground">
+                        {log.visitorId.slice(0, 6)}...{log.visitorId.slice(-4)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   )
 }

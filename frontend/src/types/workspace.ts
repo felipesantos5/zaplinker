@@ -24,6 +24,7 @@ interface AccessDetail {
   deviceType: "mobile" | "desktop";
   ipAddress: string;
   visitorId: string;
+  country: string;
 }
 
 export interface Workspace {
