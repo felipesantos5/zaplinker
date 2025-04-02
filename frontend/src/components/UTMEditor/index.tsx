@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { API_BASE_URL } from '@/constants/urlApi';
 import { LocateFixed } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type UTMFields = {
   utm_source?: string;
@@ -37,6 +38,8 @@ export const UTMEditor = ({ workspaceId, userId }: Props) => {
     utm_content: ''
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadData = async () => {
@@ -82,9 +85,17 @@ export const UTMEditor = ({ workspaceId, userId }: Props) => {
       });
 
       if (!response.ok) throw new Error('Failed to save UTM parameters');
+      toast({
+        title: "UTM editada com sucesso.",
+
+      });
 
       setOpen(false);
     } catch (error) {
+      toast({
+        title: "Falha ao editar a UTM.",
+        variant: "destructive",
+      });
       console.error('Save error:', error);
     } finally {
       setIsLoading(false);

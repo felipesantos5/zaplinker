@@ -37,20 +37,19 @@ const items = [
     url: "#",
     icon: Inbox,
   },
-  {
-    title: "Configurações",
-    url: "#",
-    icon: Settings,
-  },
 ]
 
 export function AppSidebar(props: AppSidebarProps) {
   const { isDarkMode, toggleTheme } = useTheme();
 
+  function refreshPage() {
+    window.location.reload();
+  }
+
   return (
-    <Sidebar>
+    <Sidebar className="w-40">
       <SidebarHeader>
-        <img src={isDarkMode ? logowhite : logodark} alt="" className="w-6 my-2 mx-auto" />
+        <img src={isDarkMode ? logowhite : logodark} alt="" className="w-8 my-2 mx-auto" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -60,10 +59,16 @@ export function AppSidebar(props: AppSidebarProps) {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
+                    {item.title === 'Workspaces' ?
+                      <a onClick={refreshPage} className="cursor-pointer" >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </a> :
+                      <a href={item.url} >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </a>
+                    }
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

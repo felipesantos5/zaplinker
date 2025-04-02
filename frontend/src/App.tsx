@@ -14,10 +14,10 @@ import { Spinner } from './components/Spinner';
 import { AppSidebar } from './components/app-sidebar';
 import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
-import WorkspaceStatsCard from './components/dashCard';
-import { ClipboardCopy, QrCode } from 'lucide-react';
+import WorkspaceStatsCard from './components/dashboard/dashCard';
+import { ChartLine, ClipboardCopy, QrCode } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
-import { UTMEditor } from './components/UTMEditor';
+import { formatPhone } from './helper/formaterPhone';
 
 // Interfaces
 interface WhatsappNumber {
@@ -148,7 +148,6 @@ const App: React.FC = () => {
     auth.signOut();
     toast({
       title: "Logout realizado com sucesso",
-
     });
   };
 
@@ -475,10 +474,13 @@ const App: React.FC = () => {
 
   const handleMetrics = () => {
     setMetrics(!metrics)
-    console.log(metrics)
   }
 
   const handleBreadCrumb = () => {
+    if (metrics) {
+      setMetrics(false)
+      return
+    }
     setIsConfiguring(false)
     setMetrics(false)
   }
@@ -544,7 +546,7 @@ const App: React.FC = () => {
         <AppSidebar logout={signOut} user={user} />
       )}
       <SidebarTrigger className='md:hidden' />
-      <main className="max-w-5xl w-full mx-auto mt-14 pr-6 md:px-6">
+      <main className={`max-w-5xl ${metrics && `max-w-[1200px]`} w-full mx-auto mt-14 pr-6 md:px-6`}>
 
         {/* criar workspace */}
         {createWorkspace &&
@@ -732,10 +734,10 @@ const App: React.FC = () => {
                       <div className="flex gap-3">
                         {user?.role !== 'free' &&
                           <Button onClick={handleMetrics}>
-                            metricas
+                            <ChartLine /> metricas
                           </Button>
                         }
-                        <UTMEditor workspaceId={selectedWorkspace._id} userId={firebaseUser?.uid} />
+                        {/* <UTMEditor workspaceId={selectedWorkspace._id} userId={firebaseUser?.uid} /> */}
                         <a
                           href={qrCodeUrl ?? ""}
                           download={`${selectedWorkspace.name}-qrcode.png`}
@@ -751,11 +753,10 @@ const App: React.FC = () => {
                           <label htmlFor="">Número <span className='text-xs'>*</span></label>
                           <Input
                             type="text"
-                            value={number}
+                            value={formatPhone(number)}
                             onChange={(e) => setNumber(e.target.value)}
-                            placeholder="Número do WhatsApp (ex: 48991319311)"
+                            placeholder="Número do WhatsApp"
                             required
-
                           />
                         </div>
                         <div className='flex flex-col gap-2'>
@@ -772,7 +773,7 @@ const App: React.FC = () => {
                         type="submit"
                         className="w-full h-10"
                       >
-                        Adicionar
+                        Adicionar número
                       </Button>
                     </form>
                     <div className="border p-4 rounded-xl mt-6">
@@ -814,7 +815,7 @@ const App: React.FC = () => {
                           <TableBody>
                             {numbers.map((num) => (
                               <TableRow key={num._id}>
-                                <TableCell className="font-medium">{num.number}</TableCell>
+                                <TableCell className="font-medium">{formatPhone(num.number)}</TableCell>
                                 <TableCell>{num.text || 'Sem texto'}</TableCell>
                                 <TableCell className='text-right'>
                                   <Switch

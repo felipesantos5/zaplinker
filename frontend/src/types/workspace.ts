@@ -24,8 +24,9 @@ interface AccessDetail {
   deviceType: "mobile" | "desktop";
   ipAddress: string;
   visitorId: string;
-  country: string;
+  country: string | "desconhecido";
   timestamp: any;
+  utmParameters?: UTMParameters;
 }
 
 export interface Workspace {
