@@ -447,7 +447,7 @@ const App: React.FC = () => {
         <AppSidebar user={user} handleHome={handleHome} />
       )}
       <SidebarTrigger className='md:hidden' />
-      <main className={`max-w-5xl ${metrics && `max-w-[1200px]`} w-full mx-auto mt-14 pr-6`}>
+      <main className={`max-w-5xl ${metrics && `max-w-[1200px]`} ${selectedWorkspace && `max-w-[1200px]`} w-full mx-auto mt-14 pr-6`}>
 
         {/* criar workspace */}
         {createWorkspace &&

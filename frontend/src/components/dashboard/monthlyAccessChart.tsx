@@ -15,8 +15,6 @@ const getMonthName = (monthNumber: number) => {
 }
 
 export function MonthlyAccessChart({ filteredAccessDetails }: any) {
-  console.log(filteredAccessDetails)
-
   const chartData = useMemo(() => {
     const monthlyData: Record<number, number> = {}
 
