@@ -1,4 +1,4 @@
-import { ChevronUp, Home, Inbox, Moon, Settings, Sun, User2 } from "lucide-react"
+import { ChevronUp, Home, Inbox, Moon, Sun, User2 } from "lucide-react"
 import logodark from "@/assets/zapfy-logo.png"
 import logowhite from "@/assets/zapfy-logo-white.png"
 
@@ -17,21 +17,10 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import PlansModal from "./plansModal";
 import { useTheme } from "@/context/ThemeContext";
-import { User } from "@/App"
-
-interface AppSidebarProps {
-  user: User
-  logout: () => void;
-
-}
+import { useAuth } from "@/hooks/auth"
 
 // Menu items.
 const items = [
-  {
-    title: "Inicio",
-    url: "#",
-    icon: Home,
-  },
   {
     title: "Workspaces",
     url: "#",
@@ -39,12 +28,12 @@ const items = [
   },
 ]
 
-export function AppSidebar(props: AppSidebarProps) {
+export function AppSidebar(props: any) {
   const { isDarkMode, toggleTheme } = useTheme();
 
-  function refreshPage() {
-    window.location.reload();
-  }
+  const {
+    signOut
+  } = useAuth();
 
   return (
     <Sidebar className="w-40">
@@ -60,7 +49,7 @@ export function AppSidebar(props: AppSidebarProps) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     {item.title === 'Workspaces' ?
-                      <a onClick={refreshPage} className="cursor-pointer" >
+                      <a onClick={props.handleHome} className="cursor-pointer">
                         <item.icon />
                         <span>{item.title}</span>
                       </a> :
@@ -93,7 +82,7 @@ export function AppSidebar(props: AppSidebarProps) {
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem onClick={props.logout}>
+                <DropdownMenuItem onClick={signOut}>
                   <span >Sair</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleTheme}>

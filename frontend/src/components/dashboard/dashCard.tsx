@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { cn } from '@/lib/utils'
 import { DateRange } from 'react-day-picker'
 import { Calendar } from '../ui/calendar'
+import { ptBR } from 'date-fns/locale';
 
 const formatUtm = (utmKey: string, utmValue: string | null | undefined) => {
   if (!utmValue) return null;
@@ -176,11 +177,11 @@ export default function WorkspaceStatsCard(id: any) {
 
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-start sm:items-center">
         <h1 className="text-2xl font-bold text-primary">Estatísticas de Acesso</h1>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           {/* Select para escolher o intervalo de tempo */}
           <Select value={timeRange.period} onValueChange={handleTimeRangeChange}>
             <SelectTrigger className="w-[180px]">
@@ -196,56 +197,56 @@ export default function WorkspaceStatsCard(id: any) {
           </Select>
 
           {/* Renderiza o DatePicker apenas se o período selecionado for 'custom' */}
-          {/* {timeRange.period === 'custom' && ( */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="date"
-                variant={"outline"}
-                className={cn(
-                  "w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {/* Exibe o intervalo de datas selecionado no botão */}
-                {date?.from ? (
-                  date.to ? (
-                    <>
-                      {format(date.from, "dd/MM/yyyy")} -{" "}
-                      {format(date.to, "dd/MM/yyyy")}
-                    </>
+          <div className='flex gap-2'>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "w-[300px] justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {/* Exibe o intervalo de datas selecionado no botão */}
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                        {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
+                      </>
+                    ) : (
+                      format(date.from, "dd/MM/yyyy")
+                    )
                   ) : (
-                    format(date.from, "dd/MM/yyyy")
-                  )
-                ) : (
-                  <span>Selecione um período</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              {/* Componente Calendar do shadcn/ui */}
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={handleDateChange}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-          {/* )} */}
+                    <span>Selecione um período</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                {/* Componente Calendar do shadcn/ui */}
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={handleDateChange}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
 
-          {/* Botão para atualizar os dados (pode ser útil após selecionar um intervalo personalizado) */}
-          <Button variant="outline" size="icon" onClick={refreshPage}>
-            <RefreshCcw className="h-4 w-4" />
-          </Button>
+            <Button variant="outline" size="icon" onClick={refreshPage}>
+              <RefreshCcw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="p-6">
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground flex items-center gap-1">

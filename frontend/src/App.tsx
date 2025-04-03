@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import logo from "@/assets/zapfy-logo-white.png"
 import { auth } from '@/config/firebase-config';
-import { signInWithPopup, GoogleAuthProvider, User as FirebaseUser, signInWithEmailAndPassword } from 'firebase/auth';
+import { User as FirebaseUser } from 'firebase/auth';
 import { Button } from './components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table';
 import { Switch } from './components/ui/switch';
 import { useToast } from './hooks/use-toast';
 import { Input } from './components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { FiExternalLink, FiEye, FiEyeOff, FiMoreVertical, FiTrash2 } from "react-icons/fi";
+import { FiExternalLink, FiMoreVertical, FiTrash2 } from "react-icons/fi";
 import { Spinner } from './components/Spinner';
 import { AppSidebar } from './components/app-sidebar';
-import { RiGoogleFill } from "react-icons/ri";
 import { SidebarTrigger } from './components/ui/sidebar';
 import WorkspaceStatsCard from './components/dashboard/dashCard';
 import { ChartLine, ClipboardCopy, QrCode } from 'lucide-react';
@@ -42,10 +40,6 @@ export interface User {
 }
 
 const App: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [errorLogin, setErrorLogin] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -129,49 +123,6 @@ const App: React.FC = () => {
       console.error('Erro ao criar/atualizar usuário:', error);
       throw error;
     }
-  };
-
-  const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      toast({
-        title: "Login realizado com sucesso",
-
-      });
-    } catch (error) {
-      console.error('Erro ao fazer login:', error);
-    }
-  };
-
-  const signOut = () => {
-    auth.signOut();
-    toast({
-      title: "Logout realizado com sucesso",
-    });
-  };
-
-  // email e senha
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  };
-
-  const handleSignInWithEmail = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Redirecionar ou realizar alguma ação após login bem-sucedido
-    } catch (error) {
-      setErrorLogin('Erro ao fazer login. Verifique suas credenciais.');
-    }
-  };
-
-  const toggleShowPassword = () => {
-    setShowPassword(prevState => !prevState);
   };
 
   // NUMBER ROUTES
@@ -485,68 +436,18 @@ const App: React.FC = () => {
     setMetrics(false)
   }
 
-  if (!firebaseUser && !user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black w-full">
-        <div className="max-w-2xl mx-auto flex flex-col items-center justify-center gap-8 mb-16">
-          <img src={logo} alt='logo Zaplinker' width={'60'}></img>
-          <h1 className='text-white font-semibold text-4xl'>Bem vindo a Zaplinker</h1>
-          <Button
-            onClick={signInWithGoogle}
-            className="mb-4 w-full"
-          >
-            Continue com o Google <RiGoogleFill />
-          </Button>
-          <hr className='border-white/50 border-t w-full'></hr>
-          <div className='flex flex-col gap-4 w-full'>
-            <Input
-              type="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="Email"
-              className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
-            />
-            <div className='relative'>
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={handlePasswordChange}
-                placeholder="Senha"
-                className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
-              />
-              <span
-                onClick={toggleShowPassword}
-                className="absolute top-[10px] right-[10px] text-white"
-                role="button"
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </span>
-            </div>
-            <div className='flex flex-col'>
-              <Button
-                onClick={handleSignInWithEmail}
-                className=""
-              >
-                Entrar
-              </Button>
-              <a href="/registrar" className='text-zinc-400 tracking-tight mt-2'>Não possui conta? <span className='font-semibold hover:underline text-zinc-100'>Registre-se</span></a>
-            </div>
-          </div>
-
-          {errorLogin && <p className="text-red-500">{errorLogin}</p>}
-        </div>
-      </div>
-    );
+  const handleHome = () => {
+    setIsConfiguring(false)
+    setMetrics(false)
   }
 
   return (
     <div className='flex justify-between w-full'>
       {user && (
-        <AppSidebar logout={signOut} user={user} />
+        <AppSidebar user={user} handleHome={handleHome} />
       )}
       <SidebarTrigger className='md:hidden' />
-      <main className={`max-w-5xl ${metrics && `max-w-[1200px]`} w-full mx-auto mt-14 pr-6 md:px-6`}>
+      <main className={`max-w-5xl ${metrics && `max-w-[1200px]`} w-full mx-auto mt-14 pr-6`}>
 
         {/* criar workspace */}
         {createWorkspace &&

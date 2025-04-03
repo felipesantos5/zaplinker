@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { auth } from '@/config/firebase-config';
-import { createUserWithEmailAndPassword, User } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import logo from "@/assets/zapfy-logo-white.png"
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { formatPhone } from '@/helper/formaterPhone';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Register = () => {
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +36,10 @@ const Register = () => {
     setName(e.target.value);
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(e.target.value);
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
   };
@@ -48,6 +54,7 @@ const Register = () => {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       setError('As senhas não coincidem.');
       return;
@@ -59,15 +66,23 @@ const Register = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const fbUser = userCredential.user;
 
-      const response = await axios.post<User>(`${API_BASE_URL}/api/user`, {
+      console.log(fbUser, fbUser.uid)
+
+      const response = await axios.post(`${API_BASE_URL}/api/user`, {
         firebaseUid: fbUser.uid,
         email: fbUser.email,
+        phone: phone,
         displayName: name
       });
+
       navigate('/');
       return response.data;
-    } catch (error) {
-      setError('Erro ao cadastrar. Por favor, tente novamente.');
+    } catch (error: any) {
+      if (error.message === "Firebase: Password should be at least 6 characters (auth/weak-password).") {
+        setError('Senha fraca. Deve ter pelo menos 6 caracteres');
+      } else {
+        setError('Erro ao cadastrar. Por favor, tente novamente.');
+      }
     }
 
     setIsLoading(false)
@@ -85,6 +100,16 @@ const Register = () => {
             onChange={handleNameChange}
             placeholder="Nome"
             className="p-2 border border-zinc-300 rounded w-full"
+            required
+          />
+          <Input
+            type="text"
+            value={formatPhone(phone)}
+            minLength={11}
+            onChange={handlePhoneChange}
+            placeholder="Celular"
+            className="p-2 border border-zinc-300 rounded w-full"
+            required
           />
           <Input
             type="email"
@@ -92,6 +117,7 @@ const Register = () => {
             onChange={handleEmailChange}
             placeholder="Email"
             className="p-2 border border-zinc-300 rounded w-full"
+            required
           />
           <div className="relative">
             <Input
@@ -100,6 +126,7 @@ const Register = () => {
               onChange={handlePasswordChange}
               placeholder="Senha"
               className="p-2 border border-zinc-300 rounded w-full"
+              required
             />
             <span
               onClick={toggleShowPassword}
@@ -117,6 +144,7 @@ const Register = () => {
               onChange={handleConfirmPasswordChange}
               placeholder="Confirme a Senha"
               className="p-2 border border-zinc-300 rounded w-full"
+              required
             />
             <span
               onClick={toggleShowConfirmPassword}
@@ -133,7 +161,7 @@ const Register = () => {
             >
               {isLoading ? 'Entrando...' : 'Cadastrar'}
             </Button>
-            <a href="/" className='text-zinc-400 tracking-tight mt-2'>Já possui uma conta? <span className='font-semibold hover:underline text-zinc-100'>Entre</span></a>
+            <Link to="/login" className='text-zinc-400 tracking-tight mt-2'>Já possui uma conta? <span className='font-semibold hover:underline text-zinc-100'>Entre</span></Link>
           </div>
           {error && <p className="text-red-500">{error}</p>}
         </form>
