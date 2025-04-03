@@ -1,22 +1,12 @@
 import { useMemo } from "react"
-import { TrendingUp } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-
-// interface AccessDetail {
-//   timestamp: string
-// }
-
-// interface MonthlyAccessChartProps {
-//   filteredAccessDetails: AccessDetail[]
-// }
 
 const getMonthName = (monthNumber: number) => {
   const date = new Date()
@@ -30,7 +20,7 @@ export function MonthlyAccessChart({ filteredAccessDetails }: any) {
   const chartData = useMemo(() => {
     const monthlyData: Record<number, number> = {}
 
-    filteredAccessDetails.forEach(({ timestamp }) => {
+    filteredAccessDetails.forEach(({ timestamp }: any) => {
       const date = new Date(timestamp)
       const month = date.getMonth()
       monthlyData[month] = (monthlyData[month] || 0) + 1

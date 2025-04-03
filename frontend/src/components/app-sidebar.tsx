@@ -1,4 +1,4 @@
-import { ChevronUp, Home, Inbox, Moon, Sun, User2 } from "lucide-react"
+import { ChevronUp, Inbox, Moon, Sun, User2 } from "lucide-react"
 import logodark from "@/assets/zapfy-logo.png"
 import logowhite from "@/assets/zapfy-logo-white.png"
 
@@ -6,7 +6,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  // SidebarGroupLabel,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -34,6 +33,11 @@ export function AppSidebar(props: any) {
   const {
     signOut
   } = useAuth();
+
+  const getFirstName = (fullName: string, wordCount = 1) => {
+    if (!fullName) return '';
+    return fullName.split(' ').slice(0, wordCount).join(' ');
+  };
 
   return (
     <Sidebar className="w-40">
@@ -74,7 +78,7 @@ export function AppSidebar(props: any) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 />{props.user?.displayName}
+                  <User2 />{getFirstName(props.user?.displayName) || 'Usuário'}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

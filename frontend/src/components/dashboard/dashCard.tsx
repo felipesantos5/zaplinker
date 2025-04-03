@@ -12,7 +12,7 @@ import { Workspace } from '@/types/workspace'
 import { MonthlyAccessChart } from './monthlyAccessChart'
 import { formaterDate } from '@/helper/formaterDate'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../ui/pagination'
-import { addDays, format } from 'date-fns'
+import { addDays, endOfDay, format } from 'date-fns'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { cn } from '@/lib/utils'
@@ -57,34 +57,33 @@ export default function WorkspaceStatsCard(id: any) {
   }, [timeRange])
 
   const handleTimeRangeChange = (value: string) => {
-    const end = new Date();
-    let start = new Date();
+    let newEnd = new Date();
+    let newStart = new Date();
 
     // Define a data de início com base no período selecionado
     switch (value) {
       case '1d':
-        start = addDays(end, -1);
+        newStart = addDays(newEnd, -1);
         break;
       case '7d':
-        start = addDays(end, -7);
+        newStart = addDays(newEnd, -7);
         break;
       case '30d':
-        start = addDays(end, -30);
+        newStart = addDays(newEnd, -30);
         break;
       case '90d':
-        start = addDays(end, -90);
+        newStart = addDays(newEnd, -90);
         break;
       case 'custom':
-        // Se o período for custom, usa as datas selecionadas no DatePicker
         if (date?.from && date?.to) {
-          start = date.from;
-          end = date.to;
+          newStart = date.from;
+          newEnd = date.to;
         }
         break;
     }
 
     // Atualiza o estado timeRange com o novo período e as datas de início e fim
-    setTimeRange({ period: value, start, end });
+    setTimeRange({ period: value, start: newStart, end: newEnd });
   };
 
   // Processar dados filtrados
@@ -92,21 +91,22 @@ export default function WorkspaceStatsCard(id: any) {
     if (!data) return { totals: null, chartData: [], filteredAccessDetails: [] };
 
     // Calcular intervalo de datas
-    const daysMap: { [key: string]: number } = {
-      '1d': 1,
-      '7d': 7,
-      '30d': 30,
-      '90d': 90
-    }
+    // const daysMap: { [key: string]: number } = {
+    //   '1d': 1,
+    //   '7d': 7,
+    //   '30d': 30,
+    //   '90d': 90
+    // }
 
-    const days = daysMap[timeRange] || 7
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
+    // const days = daysMap[timeRange] || 7
+    // const startDate = new Date()
+    // startDate.setDate(startDate.getDate() - days)
 
     // Filtrar dados
-    const filtered = data.accessDetails.filter(entry =>
-      new Date(entry.timestamp) >= timeRange.start && new Date(entry.timestamp) <= timeRange.end
-    );
+    const filtered = data.accessDetails.filter(entry => {
+      const entryDate = new Date(entry.timestamp);
+      return entryDate >= timeRange.start && entryDate <= timeRange.end;
+    });
 
     // Calcular totais
     const totals = {
@@ -144,11 +144,13 @@ export default function WorkspaceStatsCard(id: any) {
 
 
   const handleDateChange = (newDate: DateRange | undefined) => {
-    // Atualiza o estado date com o novo intervalo de datas
     setDate(newDate);
-    // Se um intervalo de datas válido for selecionado, atualiza o timeRange para 'custom'
     if (newDate?.from && newDate?.to) {
-      setTimeRange({ period: 'custom', start: newDate.from, end: newDate.to });
+      setTimeRange({
+        period: 'custom',
+        start: newDate.from,
+        end: endOfDay(newDate.to) // Isso vai definir o horário para 23:59:59.999 do último dia
+      });
     }
   };
 
@@ -334,46 +336,6 @@ export default function WorkspaceStatsCard(id: any) {
             </ResponsiveContainer>
           </div>
         </Card>
-
-        {/* <Card className="p-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold">Distribuição por Dispositivo</h2>
-            <p className="text-sm text-muted-foreground">Comparação entre desktop e mobile</p>
-          </div>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
-                <XAxis
-                  dataKey="date"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--background))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: 'var(--radius)'
-                  }}
-                />
-                <Bar
-                  dataKey="desktop"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="mobile"
-                  fill="hsl(var(--destructive))"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card> */}
       </div>
 
       <Card className="p-6 mt-8 min-h-[555px] flex flex-col justify-between">
@@ -407,6 +369,7 @@ export default function WorkspaceStatsCard(id: any) {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {log.country !== "Desconhecido" && log.country !== "Local" &&
+                        log.country !== "Erro na busca" &&
                         <ReactCountryFlag
                           countryCode={log.country}
                           svg
@@ -421,7 +384,7 @@ export default function WorkspaceStatsCard(id: any) {
                   </TableCell>
 
                   <TableCell>
-                    <div className="flex flex-col gap-1 text-xs">
+                    <div className="grid grid-cols-2 gap-1 text-xs">
                       {log.utmParameters && Object.entries(log.utmParameters).map(([key, value]) => {
                         const formattedUtm = formatUtm(key, value as string);
                         return formattedUtm && (
@@ -441,21 +404,24 @@ export default function WorkspaceStatsCard(id: any) {
                       <span className="capitalize">{log.deviceType}</span>
                     </div>
                   </TableCell>
-
-
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
         </div>
         <Pagination className="mt-4">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                className='cursor-pointer'
+                className={cn(
+                  'cursor-pointer',
+                  currentPage === 1 && 'pointer-events-none opacity-50'
+                )}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                // disabled={currentPage === 1}
                 aria-label="Página anterior"
+                aria-disabled={currentPage === 1}
               >
                 Anterior
               </PaginationPrevious>
@@ -466,9 +432,12 @@ export default function WorkspaceStatsCard(id: any) {
             <PaginationItem>
               <PaginationNext
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredAccessDetails.length / itemsPerPage)))}
-                className='cursor-pointer'
-                disabled={currentPage === Math.ceil(filteredAccessDetails.length / itemsPerPage)}
+                className={cn(
+                  'cursor-pointer',
+                  currentPage === Math.ceil(filteredAccessDetails.length / itemsPerPage) && 'pointer-events-none opacity-50'
+                )}
                 aria-label="Página posterior"
+                aria-disabled={currentPage === Math.ceil(filteredAccessDetails.length / itemsPerPage)}
               >
                 <ChevronRight className="h-4 w-4 ml-2" />
                 Proxima
