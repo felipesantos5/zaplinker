@@ -167,7 +167,11 @@ export default function WorkspaceStatsCard(id: any) {
     .slice(startIndex, endIndex);
 
 
-  if (!data) return <div className="p-4">Carregando...</div>
+  if (!data) return (
+    <div className="flex justify-center items-center w-full h-[300px]">
+      <Spinner />
+    </div>
+  )
 
   if (loading) return (
     <div className="flex justify-center items-center w-full h-[300px]">
