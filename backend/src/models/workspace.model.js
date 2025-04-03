@@ -17,6 +17,8 @@ const utmSchema = new mongoose.Schema(
     utm_campaign: { type: String, trim: true, maxlength: 255 },
     utm_term: { type: String, trim: true, maxlength: 255 },
     utm_content: { type: String, trim: true, maxlength: 255 },
+    src: { type: String, trim: true, maxlength: 255 },
+    sck: { type: String, trim: true, maxlength: 255 },
   },
   { _id: false }
 );

@@ -550,39 +550,35 @@ app.get("/:customUrl", async (req, res) => {
     return res.status(200).send("Social Media Preview"); // Não conta o acesso
   }
 
-  // 1. Extrair customUrl e parâmetros UTM da URL
+  // 1. Extrair customUrl e todos os parâmetros da URL
   const fullPath = req.params.customUrl + (req.params[0] || "");
-  const [customUrl, ...utmParts] = fullPath.split("&");
+  const [customUrl, ...paramParts] = fullPath.split("&");
 
-  // 2. Inicializar objeto para armazenar os parâmetros UTM
-  const utmParams = {};
+  // 2. Inicializar objeto para armazenar os parâmetros UTM, src e sck
+  const utmParameters = {};
 
-  // 3. Iterar sobre as partes da URL para extrair os parâmetros UTM
-  utmParts.forEach((part) => {
+  // 3. Iterar sobre as partes da URL para extrair os parâmetros
+  paramParts.forEach((part) => {
     const [key, value] = part.split("=");
-    if (key.startsWith("utm_")) {
+    if (key.startsWith("utm_") || key === "src" || key === "sck") {
       // Decodificar o valor para lidar com caracteres especiais na URL
-      utmParams[key] = decodeURIComponent(value);
+      utmParameters[key] = decodeURIComponent(value);
     }
   });
 
   try {
     const now = new Date();
-    // Obter o IP do usuário, considerando proxies
     const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
-    // Determinar o tipo de dispositivo (mobile ou desktop)
     const deviceType = req.useragent.isMobile ? "mobile" : "desktop";
-
-    // Obter o país do usuário com base no IP
     const country = await getCountryFromIP(userIp);
 
-    // Criar objeto com detalhes do acesso
+    // Criar objeto com detalhes do acesso, incluindo utmParameters
     const accessDetails = {
       timestamp: now,
       deviceType,
       ipAddress: userIp,
       visitorId: req.visitorId,
-      utmParameters: utmParams, // Usar utmParams corretamente
+      utmParameters,
       country,
     };
 
@@ -637,7 +633,6 @@ app.get("/:customUrl", async (req, res) => {
     if (!workspace) {
       res.redirect("https://use.zaplinker.com");
       return;
-      // return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
     // 4. Buscar números ativos e redirecionar
@@ -665,23 +660,28 @@ app.get("/:customUrl", async (req, res) => {
       urlParams.append("text", randomNumber.text);
     }
 
-    // 10. Adicionar UTM Parameters do Workspace (defaultUtmParameters)
+    // 10. Adicionar UTM Parameters, src e sck do Workspace (defaultUtmParameters)
     if (workspace.defaultUtmParameters) {
       Object.entries(workspace.defaultUtmParameters).forEach(([key, value]) => {
         if (value) urlParams.append(key, value);
       });
     }
 
-    // 11. Construir URL final do WhatsApp
+    // 11. Adicionar UTM Parameters, src e sck da URL atual
+    Object.entries(utmParameters).forEach(([key, value]) => {
+      if (value) urlParams.append(key, value);
+    });
+
+    // 12. Construir URL final do WhatsApp
     const whatsappUrl = `https://api.whatsapp.com/send?${urlParams.toString()}`;
 
-    // 12. Atualizar estatísticas do número do WhatsApp
+    // 13. Atualizar estatísticas do número do WhatsApp
     WhatsappNumber.findByIdAndUpdate(randomNumber._id, {
       $inc: { accessCount: 1 },
       $push: { accessTimes: now },
     }).catch(console.error);
 
-    // 13. Redirecionar para a URL do WhatsApp
+    // 14. Redirecionar para a URL do WhatsApp
     res.redirect(whatsappUrl);
   } catch (error) {
     console.error("Erro:", error);
@@ -691,6 +691,7 @@ app.get("/:customUrl", async (req, res) => {
     });
   }
 });
+
 // Rota para alternar o status de um número (atualizada para verificar o workspace)
 app.put("/api/whatsapp/:numberId/toggle", authMiddleware, async (req, res) => {
   try {
