@@ -10,6 +10,17 @@ const visitorSchema = new mongoose.Schema({
   country: { type: String },
 });
 
+const utmSchema = new mongoose.Schema(
+  {
+    utm_source: { type: String, trim: true, maxlength: 255 },
+    utm_medium: { type: String, trim: true, maxlength: 255 },
+    utm_campaign: { type: String, trim: true, maxlength: 255 },
+    utm_term: { type: String, trim: true, maxlength: 255 },
+    utm_content: { type: String, trim: true, maxlength: 255 },
+  },
+  { _id: false }
+);
+
 const workspaceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, maxlength: 25 },
@@ -39,6 +50,7 @@ const workspaceSchema = new mongoose.Schema(
         ipAddress: String,
         visitorId: String,
         country: String,
+        utmParameters: utmSchema,
       },
     ],
   },

@@ -1,7 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import QRCode from "qrcode";
 import useragent from "express-useragent";
 import Workspace from "./models/workspace.model.js";
 import cookieParser from "cookie-parser";
@@ -9,18 +8,22 @@ import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import "dotenv/config";
 import { getCountryFromIP } from "./helper/getCountryFromIP.js";
+import userRoutes from "./routes/user.js";
+import qrCodeRoutes from "./routes/qrCode.js";
+import User from "./models/user.js";
 
 const app = express();
 
 const prodCorsOptions = {
-  origin: ["https://app.zaplinker.com/"],
+  origin: ["https://app.zaplinker.com/", "http://localhost:5000"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Firebase-UID", "sbr"],
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(prodCorsOptions));
+// app.use(cors(prodCorsOptions));
+app.use(cors());
 app.options("*", cors(prodCorsOptions));
 
 // Middlewares
@@ -83,73 +86,6 @@ const PLAN_LIMITS = {
 
 // Use esse middleware nas rotas que precisam rastrear o tipo de dispositivo
 
-// Modelo de Usuário atualizado
-const User = mongoose.model(
-  "User",
-  new mongoose.Schema({
-    firebaseUid: { type: String, required: true, unique: true },
-    email: { type: String, required: true },
-    displayName: String,
-    createdAt: { type: Date, default: Date.now },
-    personalHash: { type: Date, default: Date.now },
-    role: { type: String, default: "free", enum: ["free", "pro", "premium"] }, // Novo campo para o plano
-  })
-);
-
-// Novo modelo de Workspace
-// const Workspace = mongoose.model(
-//   "Workspace",
-//   new mongoose.Schema(
-//     {
-//       name: {
-//         type: String,
-//         required: true,
-//         maxlength: 25,
-//       },
-//       customUrl: {
-//         type: String,
-//         required: true,
-//         unique: true,
-//         maxlength: 35,
-//         match: /^[a-zA-Z0-9_-]+$/,
-//       },
-//       userId: {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: "User",
-//         required: true,
-//       },
-//       accessCount: {
-//         type: Number,
-//         default: 0,
-//       },
-//       desktopAccessCount: {
-//         type: Number,
-//         default: 0,
-//       },
-//       mobileAccessCount: {
-//         type: Number,
-//         default: 0,
-//       },
-//       uniqueVisitors: [
-//         {
-//           ip: String,
-//           firstVisit: Date,
-//         },
-//       ],
-//       accessDetails: [
-//         {
-//           timestamp: Date,
-//           deviceType: String,
-//           ipAddress: String,
-//         },
-//       ],
-//     },
-//     {
-//       timestamps: true,
-//     }
-//   )
-// );
-
 // Modelo de Número de WhatsApp atualizado
 const WhatsappNumber = mongoose.model(
   "WhatsappNumber",
@@ -207,6 +143,33 @@ connectDB();
 //   resetDatabase();
 // });
 
+app.use((req, res, next) => {
+  // Extrai o customURL dos parâmetros da rota
+  const customURL = req.params.customURL;
+
+  // Extrai os parâmetros UTM da query string
+  const utmSource = req.query.utm_source;
+  const utmMedium = req.query.utm_medium;
+  const utmCampaign = req.query.utm_campaign;
+  const utmTerm = req.query.utm_term;
+  const utmContent = req.query.utm_content;
+
+  // Anexa os parâmetros UTM ao objeto 'req' para uso posterior
+  req.utmParams = {
+    utm_source: utmSource,
+    utm_medium: utmMedium,
+    utm_campaign: utmCampaign,
+    utm_term: utmTerm,
+    utm_content: utmContent,
+  };
+
+  // Anexa o customURL ao objeto 'req' para uso posterior
+  req.customURL = customURL;
+
+  // Chama o próximo middleware ou handler de rota
+  next();
+});
+
 // Middleware de autenticação
 const authMiddleware = async (req, res, next) => {
   const firebaseUid = req.header("Firebase-UID");
@@ -225,27 +188,55 @@ const authMiddleware = async (req, res, next) => {
 };
 
 // Rota para criar ou atualizar usuário após login com Firebase
-app.post("/api/user", async (req, res) => {
-  const { firebaseUid, email, displayName } = req.body;
+// app.post("/api/user", async (req, res) => {
+//   const { firebaseUid, email, displayName, phone } = req.body;
 
-  try {
-    let user = await User.findOne({ firebaseUid });
-    if (user) {
-      // Atualiza o usuário existente
-      user.email = email;
-      if (displayName) user.displayName = displayName;
-      await user.save();
-    } else {
-      // Cria um novo usuário
-      user = new User({ firebaseUid, email, displayName });
-      await user.save();
-    }
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("Erro ao criar/atualizar usuário:", error); // Log completo
-    res.status(400).json({ message: "Erro ao criar/atualizar usuário", error: error.message });
-  }
-});
+//   try {
+//     // Validação dos dados recebidos
+//     if (!firebaseUid || !email) {
+//       return res.status(400).json({ message: "firebaseUid e email são obrigatórios" });
+//     }
+
+//     // Procura o usuário pelo firebaseUid
+//     let user = await User.findOne({ firebaseUid });
+
+//     if (user) {
+//       // Usuário já existe, atualiza os dados
+//       user.email = email;
+//       if (displayName) user.displayName = displayName;
+//       if (phone) user.phone = phone; // Adiciona ou atualiza o telefone
+//       await user.save();
+//       return res.status(200).json({ message: "Usuário atualizado com sucesso", user });
+//     } else {
+//       // Usuário não existe, tenta criar no Firebase Authentication
+//       try {
+//         // Cria o usuário no Firebase Authentication
+//         // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+//         // const fbUser = userCredential.user;
+
+//         // Cria um novo usuário no MongoDB
+//         const newUser = new User({
+//           firebaseUid,
+//           email,
+//           displayName,
+//           phone, // Adiciona o telefone
+//         });
+//         await newUser.save();
+//         return res.status(201).json({ message: "Usuário criado com sucesso", user: newUser });
+//       } catch (firebaseError) {
+//         // Se falhar na criação do Firebase, retorna o erro
+//         console.error("Erro ao criar usuário no Firebase:", firebaseError);
+//         return res.status(400).json({ message: "Erro ao criar usuário no Firebase", error: firebaseError.message });
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Erro ao criar/atualizar usuário:", error);
+//     res.status(500).json({ message: "Erro ao criar/atualizar usuário", error: error.message });
+//   }
+// });
+
+app.use("/api", userRoutes);
+app.use("/api", qrCodeRoutes);
 
 // Nova rota para criar um workspace
 app.post("/api/workspace", authMiddleware, async (req, res) => {
@@ -559,16 +550,44 @@ app.get("/:customUrl", async (req, res) => {
     return res.status(200).send("Social Media Preview"); // Não conta o acesso
   }
 
+  // 1. Extrair customUrl e parâmetros UTM da URL
+  const fullPath = req.params.customUrl + (req.params[0] || "");
+  const [customUrl, ...utmParts] = fullPath.split("&");
+
+  // 2. Inicializar objeto para armazenar os parâmetros UTM
+  const utmParams = {};
+
+  // 3. Iterar sobre as partes da URL para extrair os parâmetros UTM
+  utmParts.forEach((part) => {
+    const [key, value] = part.split("=");
+    if (key.startsWith("utm_")) {
+      // Decodificar o valor para lidar com caracteres especiais na URL
+      utmParams[key] = decodeURIComponent(value);
+    }
+  });
+
   try {
-    const { customUrl } = req.params;
     const now = new Date();
+    // Obter o IP do usuário, considerando proxies
     const userIp = (req.headers["x-forwarded-for"] || req.ip).split(",")[0].trim();
+    // Determinar o tipo de dispositivo (mobile ou desktop)
     const deviceType = req.useragent.isMobile ? "mobile" : "desktop";
 
+    // Obter o país do usuário com base no IP
     const country = await getCountryFromIP(userIp);
 
+    // Criar objeto com detalhes do acesso
+    const accessDetails = {
+      timestamp: now,
+      deviceType,
+      ipAddress: userIp,
+      visitorId: req.visitorId,
+      utmParameters: utmParams, // Usar utmParams corretamente
+      country,
+    };
+
     // 1. Tentar atualizar visitante existente
-    const updateResult = await Workspace.findOneAndUpdate(
+    let workspace = await Workspace.findOneAndUpdate(
       {
         customUrl,
         "visitors.visitorId": req.visitorId,
@@ -583,21 +602,15 @@ app.get("/:customUrl", async (req, res) => {
           "visitors.$.lastVisit": now,
         },
         $push: {
-          accessDetails: {
-            timestamp: now,
-            deviceType,
-            ipAddress: userIp,
-            visitorId: req.visitorId,
-            country,
-          },
+          accessDetails: accessDetails,
         },
       },
       { new: true }
     );
 
     // 2. Se não encontrou o visitante, adicionar novo
-    if (!updateResult) {
-      await Workspace.findOneAndUpdate(
+    if (!workspace) {
+      workspace = await Workspace.findOneAndUpdate(
         { customUrl },
         {
           $inc: {
@@ -613,64 +626,62 @@ app.get("/:customUrl", async (req, res) => {
               lastVisit: now,
               visitCount: 1,
             },
-            accessDetails: {
-              timestamp: now,
-              deviceType,
-              ipAddress: userIp,
-              visitorId: req.visitorId,
-              country,
-            },
+            accessDetails: accessDetails,
           },
         },
         { new: true }
       );
     }
 
-    // 3. Buscar números ativos e redirecionar
-    const workspace = await Workspace.findOne({ customUrl });
+    // 3. Verificar se o workspace foi encontrado
+    if (!workspace) {
+      res.redirect("https://use.zaplinker.com");
+      return;
+      // return res.status(404).json({ message: "Workspace não encontrado" });
+    }
+
+    // 4. Buscar números ativos e redirecionar
     const activeNumbers = await WhatsappNumber.find({
       workspaceId: workspace._id,
       isActive: true,
     });
 
-    const utmParams = [];
-    for (const [key, value] of Object.entries(workspace.utmParameters)) {
-      if (value) utmParams.push(`${key}=${encodeURIComponent(value)}`);
-    }
-
+    // 5. Verificar se há números ativos
     if (activeNumbers.length === 0) {
       return res.status(404).json({ message: "Nenhum número ativo encontrado" });
     }
 
+    // 6. Selecionar um número aleatório
     const randomNumber = activeNumbers[Math.floor(Math.random() * activeNumbers.length)];
 
-    // Construir parâmetros da URL
+    // 7. Construir parâmetros da URL
     const urlParams = new URLSearchParams();
 
-    // Parâmetro obrigatório do WhatsApp
+    // 8. Adicionar parâmetro obrigatório do WhatsApp
     urlParams.append("phone", randomNumber.number);
 
-    // Adicionar texto se existir
+    // 9. Adicionar texto se existir
     if (randomNumber.text) {
       urlParams.append("text", randomNumber.text);
     }
 
-    // Adicionar UTM Parameters do Workspace
-    if (workspace.utmParameters) {
-      Object.entries(workspace.utmParameters).forEach(([key, value]) => {
+    // 10. Adicionar UTM Parameters do Workspace (defaultUtmParameters)
+    if (workspace.defaultUtmParameters) {
+      Object.entries(workspace.defaultUtmParameters).forEach(([key, value]) => {
         if (value) urlParams.append(key, value);
       });
     }
 
-    // Construir URL final
+    // 11. Construir URL final do WhatsApp
     const whatsappUrl = `https://api.whatsapp.com/send?${urlParams.toString()}`;
 
-    // Atualizar estatísticas
+    // 12. Atualizar estatísticas do número do WhatsApp
     WhatsappNumber.findByIdAndUpdate(randomNumber._id, {
       $inc: { accessCount: 1 },
       $push: { accessTimes: now },
     }).catch(console.error);
 
+    // 13. Redirecionar para a URL do WhatsApp
     res.redirect(whatsappUrl);
   } catch (error) {
     console.error("Erro:", error);
@@ -730,37 +741,9 @@ app.delete("/api/whatsapp/:numberId", authMiddleware, async (req, res) => {
   }
 });
 
-// QR CODE
-
-// Rota para gerar QR Code para a URL personalizada do workspace
-app.get("/api/workspace/:id/qrcode", authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const workspace = await Workspace.findById(id);
-
-    if (!workspace) {
-      return res.status(404).json({ message: "Workspace não encontrado" });
-    }
-
-    // Construir a URL completa do workspace
-    const url = `${process.env.BASE_URL}/${workspace.customUrl}`;
-
-    // Gerar QR Code
-    QRCode.toDataURL(url, (err, qrCodeDataUrl) => {
-      if (err) {
-        return res.status(500).json({ message: "Erro ao gerar QR Code", error: err.message });
-      }
-      // Retornar o QR code como uma string base64 que pode ser renderizada como imagem
-      res.json({ qrCodeDataUrl });
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Erro no servidor", error: error.message });
-  }
+app.get("/", (req, res) => {
+  res.redirect("https://use.zaplinker.com");
 });
-
-// app.get("/", (req, res) => {
-//   res.redirect("https://use.zaplinker.com");
-// });
 
 const PORT = process.env.PORT || 5000;
 
