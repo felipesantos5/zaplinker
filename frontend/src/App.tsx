@@ -470,6 +470,7 @@ const App: React.FC = () => {
                       type="text"
                       value={newWorkspaceUrl}
                       onChange={(e) => setNewWorkspaceUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreateWorkspace()}
                       placeholder="URL personalizada"
                     />
                   </div>

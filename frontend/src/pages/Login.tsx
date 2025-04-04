@@ -49,6 +49,7 @@ export const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Senha"
               className="p-2 border border-zinc-300 rounded w-full text-zinc-50"
+              onKeyDown={(e) => e.key === 'Enter' && handleSignInWithEmail()}
             />
             <span
               onClick={toggleShowPassword}
