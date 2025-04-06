@@ -183,7 +183,7 @@ export default function WorkspaceStatsCard(id: any) {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-8">
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-start sm:items-center">
         <h1 className="text-2xl font-bold text-primary">Estatísticas de Acesso</h1>
 
