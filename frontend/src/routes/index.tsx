@@ -4,7 +4,7 @@ import Register from '@/pages/Register';
 import RegisterCheckOut from '@/pages/RegisterCheckOut';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
-import { NotFound } from '@/pages/NotFound';
+import NotFound from '@/pages/NotFound';
 
 const AppRouter = () => {
   return (
