@@ -631,8 +631,8 @@ const App: React.FC = () => {
                 {metrics ? <WorkspaceStatsCard id={selectedWorkspace?._id} /> :
                   <section className='flex flex-col mb-10'>
 
-                    <div className='flex items-center justify-between mb-16 '>
-                      <h2 className="text-5xl font-bold text-zinc-800capitalize">{selectedWorkspace.name}</h2>
+                    <div className='flex items-center justify-between mb-16 flex-wrap gap-y-3'>
+                      <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold capitalize">{selectedWorkspace.name}</h2>
                       <div className="flex gap-3">
                         {user?.role !== 'free' &&
                           <Button onClick={handleMetrics}>
@@ -692,7 +692,7 @@ const App: React.FC = () => {
                         </a>
                         <Button
                           onClick={handleCopy}
-                          className='flex gap-2 items-center'
+                          className={`flex gap-2 items-center ${isCopied && `bg-zinc-400`}`}
                         >
                           <ClipboardCopy /> {isCopied ? 'URL copiada' : 'Copiar URL'}
                         </Button>

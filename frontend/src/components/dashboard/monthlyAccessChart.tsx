@@ -53,7 +53,7 @@ export function MonthlyAccessChart({ filteredAccessDetails }: any) {
 
       </CardHeader>
 
-      <CardContent className="px-4 pb-4">
+      <CardContent className="p-0">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart
             data={chartData}
