@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { Card } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { CalendarIcon, ChevronRight, Monitor, RefreshCcw, Smartphone, UserRoundCheck } from 'lucide-react'
+import { CalendarIcon, ChevronRight, Monitor, Smartphone, UserRoundCheck } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { API_BASE_URL } from '@/constants/urlApi'
 import { Spinner } from '../Spinner'
@@ -90,18 +90,6 @@ export default function WorkspaceStatsCard(id: any) {
   const { totals, chartData, filteredAccessDetails } = useMemo(() => {
     if (!data) return { totals: null, chartData: [], filteredAccessDetails: [] };
 
-    // Calcular intervalo de datas
-    // const daysMap: { [key: string]: number } = {
-    //   '1d': 1,
-    //   '7d': 7,
-    //   '30d': 30,
-    //   '90d': 90
-    // }
-
-    // const days = daysMap[timeRange] || 7
-    // const startDate = new Date()
-    // startDate.setDate(startDate.getDate() - days)
-
     // Filtrar dados
     const filtered = data.accessDetails.filter(entry => {
       const entryDate = new Date(entry.timestamp);
@@ -139,6 +127,8 @@ export default function WorkspaceStatsCard(id: any) {
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
 
+    console.log('filtro', totals)
+
     return { totals, chartData, filteredAccessDetails: filtered };
   }, [data, timeRange]);
 
@@ -154,9 +144,10 @@ export default function WorkspaceStatsCard(id: any) {
     }
   };
 
-  function refreshPage() {
-    window.location.reload();
-  }
+  // function refreshPage() {
+  //   setRefreshCount(prev => prev + 1);
+  //   fetchData();
+  // }
 
   // pagination config
 
@@ -167,7 +158,6 @@ export default function WorkspaceStatsCard(id: any) {
   const currentItems = filteredAccessDetails
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(startIndex, endIndex);
-
 
   if (!data) return (
     <div className="flex justify-center items-center w-full h-[300px]">
@@ -180,7 +170,6 @@ export default function WorkspaceStatsCard(id: any) {
       <Spinner />
     </div>
   )
-
 
   return (
     <div className="space-y-6 mb-8">
@@ -244,9 +233,11 @@ export default function WorkspaceStatsCard(id: any) {
               </PopoverContent>
             </Popover>
 
-            <Button variant="outline" size="icon" onClick={refreshPage}>
+            {/* <Button variant="outline" size="icon" onClick={() => {
+              refreshPage()
+            }}>
               <RefreshCcw className="h-4 w-4" />
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
