@@ -240,21 +240,23 @@ app.use("/api", qrCodeRoutes);
 
 // Nova rota para criar um workspace
 app.post("/api/workspace", authMiddleware, async (req, res) => {
-  const { customUrl, name, utmParameters = {} } = req.body;
-
-  if (!customUrl || !name) {
-    return res.status(400).json({ message: "URL personalizada e nome são obrigatórios" });
-  }
-
-  const userPlan = req.user.role;
-  const userWorkspacesCount = await Workspace.countDocuments({ userId: req.user._id });
-
-  if (userWorkspacesCount >= PLAN_LIMITS[userPlan].maxWorkspaces) {
-    return res.status(403).json({ message: "Limite de workspaces atingido para o seu plano" });
-  }
-
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const existingWorkspace = await Workspace.findOne({ customUrl });
+    const { customUrl, name, utmParameters = {} } = req.body;
+
+    if (!customUrl || !name) {
+      return res.status(400).json({ message: "URL personalizada e nome são obrigatórios" });
+    }
+
+    const userPlan = req.user.role;
+    const userWorkspacesCount = await Workspace.countDocuments({ userId: req.user._id }).session(session);
+
+    if (userWorkspacesCount >= PLAN_LIMITS[userPlan].maxWorkspaces) {
+      return res.status(403).json({ message: "Limite de workspaces atingido para o seu plano" });
+    }
+
+    const existingWorkspace = await Workspace.findOne({ customUrl }).session(session);
     if (existingWorkspace) {
       return res.status(409).json({ message: "URL já está em uso" });
     }
@@ -266,15 +268,19 @@ app.post("/api/workspace", authMiddleware, async (req, res) => {
       utmParameters,
     });
 
-    await newWorkspace.save();
+    await newWorkspace.save({ session });
 
+    await session.commitTransaction();
     res.status(201).json({ message: "Workspace criado com sucesso", workspace: newWorkspace });
   } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({
       message: "Erro ao criar workspace",
       error: error.message,
       stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
+  } finally {
+    session.endSession();
   }
 });
 
