@@ -492,26 +492,36 @@ app.get("/api/workspaces/:id/numbers/stats", async (req, res) => {
 
 // Rota para adicionar um novo número (atualizada para usar workspaceId)
 app.post("/api/whatsapp", authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { workspaceId, number, text } = req.body;
 
-    const workspace = await Workspace.findOne({ _id: workspaceId, userId: req.user._id });
+    // Verifique se o workspace existe e pertence ao usuário
+    const workspace = await Workspace.findOne({ _id: workspaceId, userId: req.user._id }).session(session);
     if (!workspace) {
       return res.status(404).json({ message: "Workspace não encontrado" });
     }
 
     const userPlan = req.user.role;
-    const numbersCount = await WhatsappNumber.countDocuments({ workspaceId });
+    const numbersCount = await WhatsappNumber.countDocuments({ workspaceId }).session(session);
 
+    // Verifique o limite de números baseado no plano
     if (numbersCount >= PLAN_LIMITS[userPlan].maxNumbersPerWorkspace) {
       return res.status(403).json({ message: "Limite de números atingido para este workspace" });
     }
 
+    // Cria novo número de WhatsApp
     const newNumber = new WhatsappNumber({ workspaceId, number, text });
-    await newNumber.save();
+    await newNumber.save({ session });
+
+    await session.commitTransaction();
     res.status(201).json(newNumber);
   } catch (error) {
+    await session.abortTransaction();
     res.status(400).json({ message: "Erro ao adicionar número", error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
