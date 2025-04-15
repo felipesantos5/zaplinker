@@ -30,9 +30,9 @@ const plans = [
     ],
   },
   {
-    title: 'Plano Pro',
-    name: 'pro',
-    price: 'R$30.00',
+    title: 'Plano Mensal',
+    name: 'subscriber',
+    price: 'R$50.00',
     description: 'Para negócios em crescimento, com mais recursos.',
     features: [
       { name: '5 links', included: true },
@@ -41,12 +41,12 @@ const plans = [
       { name: 'Metricas de trafego', included: true },
       { name: 'Personalização de UTMS', included: false },
     ],
-    link: 'https://buy.stripe.com/bIY9CKbQ207x7EQ288'
+    link: 'https://buy.stripe.com/eVa6qy07k9I76AM8wz'
   },
   {
-    title: 'Plano Premium',
-    name: 'premium',
-    price: 'R$130.00',
+    title: 'Plano Anual',
+    name: 'subscriber',
+    price: 'R$35.00',
     description: 'Completo e ilimitado para máxima flexibilidade.',
     features: [
       { name: 'Links ilimitados', included: true },
@@ -55,7 +55,7 @@ const plans = [
       { name: 'Metricas de trafego', included: true },
       { name: 'Personalização de UTMS', included: true },
     ],
-    link: 'https://buy.stripe.com/eVa4iqbQ27zZ7EQaEF'
+    link: 'https://buy.stripe.com/cN27uC9HUbQf9MYeUY'
   },
 ];
 

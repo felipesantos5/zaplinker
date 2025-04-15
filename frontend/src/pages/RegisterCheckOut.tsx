@@ -51,14 +51,16 @@ const RegisterCheckOut = () => {
     setConfirmPassword(e.target.value);
   };
 
-  const handleCheckoutRedirect = () => {
+  const handleCheckoutRedirect = (e: any) => {
+    e.preventDefault();
+
     const baseUrl = "https://buy.stripe.com/";
     let targetUrl;
 
-    if (planType === 'pro') {
-      targetUrl = `${baseUrl}bIY9CKbQ207x7EQ288`;
-    } else if (planType === 'premium') {
-      targetUrl = `${baseUrl}eVa4iqbQ27zZ7EQaEF`;
+    if (planType === 'mensal') {
+      targetUrl = `${baseUrl}eVa6qy07k9I76AM8wz`;
+    } else if (planType === 'anual') {
+      targetUrl = `${baseUrl}cN27uC9HUbQf9MYeUY`;
     } else {
       return;
     }
@@ -84,10 +86,10 @@ const RegisterCheckOut = () => {
         email: fbUser.email,
         displayName: name
       });
-      if (planType === 'pro') {
-        window.location.href = ('https://buy.stripe.com/bIY9CKbQ207x7EQ288');
-      } else if (planType === 'premium') {
-        window.location.href = ('https://buy.stripe.com/eVa4iqbQ27zZ7EQaEF');
+      if (planType === 'mensal') {
+        window.location.href = ('https://buy.stripe.com/eVa6qy07k9I76AM8wz');
+      } else if (planType === 'anual') {
+        window.location.href = ('https://buy.stripe.com/cN27uC9HUbQf9MYeUY');
       } else {
         navigate('/');
       }
@@ -103,10 +105,10 @@ const RegisterCheckOut = () => {
     try {
       await signInWithPopup(auth, provider);
 
-      if (planType === 'pro') {
-        window.location.href = ('https://buy.stripe.com/bIY9CKbQ207x7EQ288');
-      } else if (planType === 'premium') {
-        window.location.href = ('https://buy.stripe.com/eVa4iqbQ27zZ7EQaEF');
+      if (planType === 'mensal') {
+        window.location.href = ('https://buy.stripe.com/eVa6qy07k9I76AM8wz');
+      } else if (planType === 'anual') {
+        window.location.href = ('https://buy.stripe.com/cN27uC9HUbQf9MYeUY');
       } else {
         navigate('/');
       }
@@ -187,6 +189,7 @@ const RegisterCheckOut = () => {
           <div className='flex flex-col'>
             <Button
               disabled={isLoading}
+              type='submit'
             >
               {isLoading ? 'Entrando...' : 'Cadastrar'}
             </Button>
