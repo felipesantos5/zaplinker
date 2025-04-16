@@ -264,10 +264,11 @@ const App: React.FC = () => {
           });
         } else {
           toast({
-            title: "Erro ao atualizar workspace",
+            title: "Erro ao criar workspace",
             description: error.response.data.message || "Não foi possível criar o workspace. Tente novamente.",
             variant: "destructive",
           });
+          setCreateWorkspace(false)
         }
       } else {
         toast({
