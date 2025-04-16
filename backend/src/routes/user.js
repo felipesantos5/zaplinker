@@ -6,42 +6,37 @@ router.post("/user", async (req, res) => {
   const { firebaseUid, email, displayName, phone } = req.body;
 
   try {
-    // Validação dos dados recebidos
-    if (!firebaseUid || !email) {
-      return res.status(400).json({ message: "firebaseUid e email são obrigatórios" });
+    // Validação mínima: agora só email é obrigatório
+    if (!email) {
+      return res.status(400).json({ message: "email é obrigatório" });
     }
 
-    // Procura o usuário pelo firebaseUid
-    let user = await User.findOne({ firebaseUid });
+    // Procura o usuário por email OU firebaseUid (preferência para firebaseUid se vier)
+    let user;
+    if (firebaseUid) {
+      user = await User.findOne({ firebaseUid });
+    } else {
+      user = await User.findOne({ email });
+    }
 
     if (user) {
-      // Usuário já existe, atualiza os dados
+      // Atualiza os campos possíveis (evita sobreescrever firebaseUid se não veio)
+      if (firebaseUid && !user.firebaseUid) user.firebaseUid = firebaseUid;
       user.email = email;
       if (displayName) user.displayName = displayName;
-      if (phone) user.phone = phone; // Adiciona ou atualiza o telefone
+      if (phone) user.phone = phone;
       await user.save();
       return res.status(200).json(user);
     } else {
-      // Usuário não existe, tenta criar no Firebase Authentication
-      try {
-        // Cria o usuário no Firebase Authentication
-        // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // const fbUser = userCredential.user;
-
-        // Cria um novo usuário no MongoDB
-        const newUser = new User({
-          firebaseUid,
-          email,
-          displayName,
-          phone, // Adiciona o telefone
-        });
-        await newUser.save();
-        return res.status(201).json(newUser);
-      } catch (firebaseError) {
-        // Se falhar na criação do Firebase, retorna o erro
-        console.error("Erro ao criar usuário no Firebase:", firebaseError);
-        return res.status(400).json({ message: "Erro ao criar usuário no Firebase", error: firebaseError.message });
-      }
+      // Cria um novo usuário com as informações disponíveis
+      const newUser = new User({
+        firebaseUid,
+        email,
+        displayName,
+        phone,
+      });
+      await newUser.save();
+      return res.status(201).json(newUser);
     }
   } catch (error) {
     console.error("Erro ao criar/atualizar usuário:", error);
