@@ -31,7 +31,7 @@ const plans = [
   },
   {
     title: 'Plano Mensal',
-    name: 'subscriber',
+    name: 'mensal',
     price: 'R$50.00',
     description: 'Para negócios em crescimento, com mais recursos.',
     features: [
@@ -45,7 +45,7 @@ const plans = [
   },
   {
     title: 'Plano Anual',
-    name: 'subscriber',
+    name: 'anual',
     price: 'R$35.00',
     description: 'Completo e ilimitado para máxima flexibilidade.',
     features: [
