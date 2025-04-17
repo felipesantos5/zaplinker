@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
   phone: String,
   createdAt: { type: Date, default: Date.now },
   personalHash: { type: Date, default: Date.now },
-  role: { type: String, default: "free", enum: ["free", "pro", "premium"] },
+  role: { type: String, default: "free", enum: ["free", "mensal", "anual"] },
+  stripeId: { type: String, default: null },
 });
 
 const User = mongoose.model("User", userSchema);

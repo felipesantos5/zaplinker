@@ -74,11 +74,11 @@ const PLAN_LIMITS = {
     maxWorkspaces: 1,
     maxNumbersPerWorkspace: 2,
   },
-  pro: {
-    maxWorkspaces: 5,
-    maxNumbersPerWorkspace: 10,
+  mensal: {
+    maxWorkspaces: Infinity,
+    maxNumbersPerWorkspace: Infinity,
   },
-  premium: {
+  anual: {
     maxWorkspaces: Infinity,
     maxNumbersPerWorkspace: Infinity,
   },
