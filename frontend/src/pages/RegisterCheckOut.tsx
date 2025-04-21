@@ -191,7 +191,7 @@ const RegisterCheckOut = () => {
               disabled={isLoading}
               type='submit'
             >
-              {isLoading ? 'Entrando...' : 'Cadastrar'}
+              {isLoading ? 'carregando...' : 'Cadastrar'}
             </Button>
             <button onClick={handleCheckoutRedirect} className='text-zinc-400 tracking-tight mt-2'>Já possui uma conta? <span className='font-semibold hover:underline text-zinc-100'>Continue sua assinatura</span></button>
           </div>
