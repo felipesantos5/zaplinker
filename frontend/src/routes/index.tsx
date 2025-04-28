@@ -4,7 +4,7 @@ import Register from '@/pages/Register';
 import RegisterCheckOut from '@/pages/RegisterCheckOut';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
-import { NotFound } from '@/pages/notFound';
+import NotFound from '@/pages/NotFound';
 
 const AppRouter = () => {
   return (
@@ -14,7 +14,8 @@ const AppRouter = () => {
           <PrivateRoute path={'/'}>
             <App />
           </PrivateRoute>
-        } />
+        }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/registrar" element={<Register />} />
         <Route path="/registrar-checkout" element={<RegisterCheckOut />} />

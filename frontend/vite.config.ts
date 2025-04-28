@@ -4,8 +4,13 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    "process.env": {},
+    global: {},
+  },
   resolve: {
     alias: {
+      crypto: "crypto-browserify",
       "@": path.resolve(__dirname, "./src"),
     },
   },
