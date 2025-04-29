@@ -28,7 +28,7 @@ export default function NotFound() {
 
         {/* Error message */}
         <h2 className="mb-6 text-2xl font-light text-gray-800 dark:text-gray-200">Pagina não encontrada</h2>
-        <p className="mb-8 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-8 text-base text-gray-600 dark:text-gray-400">
           A página que você está procurando não existe ou foi movida
         </p>
 
