@@ -19,14 +19,14 @@ const plans = [
   {
     title: 'Plano Básico',
     name: 'free',
-    price: 'R$0',
+    price: 'gratis',
     description: 'Ideal para iniciantes, com funcionalidades essenciais.',
     features: [
       { name: '1 link', included: true },
       { name: '2 números', included: true },
-      { name: 'Url personalizavel', included: false },
+      { name: 'Url personalizavel', included: true },
       { name: 'Metricas de trafego', included: false },
-      { name: 'Personalização de UTMS', included: false },
+      { name: 'Suporte personalizado', included: false },
     ],
   },
   {
@@ -35,11 +35,11 @@ const plans = [
     price: 'R$50.00',
     description: 'Para negócios em crescimento, com mais recursos.',
     features: [
-      { name: '5 links', included: true },
-      { name: '10 números', included: true },
+      { name: 'Links ilimitados', included: true },
+      { name: 'Sem limite de numeros', included: true },
       { name: 'Url personalizavel', included: true },
       { name: 'Metricas de trafego', included: true },
-      { name: 'Personalização de UTMS', included: false },
+      { name: 'Personalização de UTMS', included: true },
     ],
     link: 'https://buy.stripe.com/eVa6qy07k9I76AM8wz'
   },
@@ -53,7 +53,7 @@ const plans = [
       { name: 'Sem limite de numeros', included: true },
       { name: 'Url personalizavel', included: true },
       { name: 'Metricas de trafego', included: true },
-      { name: 'Personalização de UTMS', included: true },
+      { name: 'Suporte personalizado', included: true },
     ],
     link: 'https://buy.stripe.com/cN27uC9HUbQf9MYeUY'
   },
@@ -81,13 +81,13 @@ export default function PlansModal(props: PlansModalProps) {
                 <CardTitle>
                   {plan.title}
                   {props.role === plan.name && (
-                    <span className="ml-2 text-sm text-green-500">(Plano Atual)</span>
+                    <span className="ml-2 text-base text-green-500">(Plano Atual)</span>
                   )}
                 </CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-3xl font-bold">{plan.price}<span className="text-sm font-normal">/mês</span></p>
+                <p className="text-3xl font-bold">{plan.price}<span className="text-base font-normal">/mês</span></p>
                 <ul className="mt-4 space-y-2">
                   {plan.features.map((feature) => (
                     <li key={feature.name} className="flex items-center">

@@ -549,7 +549,7 @@ const App: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle className='text-[28px] mb-6'>Confirmar Exclusão</DialogTitle>
                   <DialogDescription>
-                    <p className="text-sm text-justify">
+                    <p className="text- text-justify">
                       Tem certeza que deseja deletar o workspace <strong className='text-base'>"{selectedWorkspace?.name}"</strong> ?</p>
                     <p>Esta ação não pode ser desfeita.</p>
 
@@ -578,9 +578,9 @@ const App: React.FC = () => {
 
         {!isConfiguring ? (
           <section>
-            <p className="text-black dark:text-white text-sm mb-2"><span className=''>Bem-vindo, </span>{user?.displayName}</p>
+            <p className="text-black dark:text-white text-base mb-2"><span className=''>Bem-vindo, </span>{user?.displayName}</p>
             <div className='flex justify-between flex-wrap gap-4 mb-8 md:mb-16'>
-              <h2 className="text-4xl md:text-5xl font-bold text-zinc-800 dark:text-zinc-200">Workspaces</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-zinc-800 dark:text-white">Workspaces</h2>
               <Button onClick={() => setCreateWorkspace(true)} className='h-10'>Criar workspace</Button>
             </div>
             {isLoadingWorkspaces ? (
@@ -680,7 +680,7 @@ const App: React.FC = () => {
                       </Button>
                     </form>
                     <div className="border p-4 rounded-xl mt-6">
-                      <p className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">URL personalizada do workspace:</p>
+                      <p className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">URL personalizada:</p>
                       <div className="flex items-center gap-4">
                         <a href={`${API_BASE_URL}/${selectedWorkspace.customUrl}`} className='w-full'>
                           <Input

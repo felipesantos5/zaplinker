@@ -246,7 +246,7 @@ export default function WorkspaceStatsCard(id: any) {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="p-6">
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <div className="text-base text-muted-foreground flex items-center gap-1">
               <CalendarIcon className="h-4 w-4" />
               Acessos Totais
             </div>
@@ -256,7 +256,7 @@ export default function WorkspaceStatsCard(id: any) {
 
         <Card className="p-6">
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <div className="text-base text-muted-foreground flex items-center gap-1">
               <UserRoundCheck className="h-4 w-4" />
               Visitantes Únicos
             </div>
@@ -266,7 +266,7 @@ export default function WorkspaceStatsCard(id: any) {
 
         <Card className="p-6">
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <div className="text-base text-muted-foreground flex items-center gap-1">
               <Monitor className="h-4 w-4" />
               Acessos Desktop
             </div>
@@ -276,7 +276,7 @@ export default function WorkspaceStatsCard(id: any) {
 
         <Card className="p-6">
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <div className="text-base text-muted-foreground flex items-center gap-1">
               <Smartphone className="h-4 w-4" />
               Acessos Mobile
             </div>
@@ -294,7 +294,7 @@ export default function WorkspaceStatsCard(id: any) {
         <Card className="p-6">
           <div className="mb-6">
             <h2 className="text-xl font-semibold">Acessos ao Longo do Tempo</h2>
-            <p className="text-sm text-muted-foreground">Visão geral dos acessos diários</p>
+            <p className="text-base text-muted-foreground">Visão geral dos acessos diários</p>
           </div>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
