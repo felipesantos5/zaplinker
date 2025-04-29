@@ -298,7 +298,7 @@ app.get("/api/workspaces", authMiddleware, async (req, res) => {
 app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, customUrl, utmParameters } = req.body;
+    const { name, customUrl, customDomain, utmParameters } = req.body;
     const updates = {};
 
     // Verificar existência do workspace
@@ -347,6 +347,26 @@ app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
       updates.customUrl = customUrl;
     }
 
+    // Atualizar domínio personalizado (se fornecido)
+    if (customDomain !== undefined) {
+      const domainRegex = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+      if (!domainRegex.test(customDomain)) {
+        return res.status(400).json({ message: "Formato de domínio inválido" });
+      }
+
+      const existingWorkspace = await Workspace.findOne({
+        customDomain,
+        _id: { $ne: id },
+      });
+
+      if (existingWorkspace) {
+        return res.status(409).json({ message: "Domínio já está em uso" });
+      }
+
+      updates.customDomain = customDomain;
+    }
+
     // Atualizar UTM Parameters (merge parcial)
     if (utmParameters !== undefined) {
       const validUtmFields = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
@@ -376,9 +396,9 @@ app.put("/api/workspace/:id", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: messages.join(", ") });
     }
 
-    // Tratar erros de duplicidade (caso race condition na URL)
+    // Tratar erros de duplicidade (caso race condition na URL ou domínio)
     if (error.code === 11000) {
-      return res.status(409).json({ message: "URL já está em uso" });
+      return res.status(409).json({ message: "URL ou domínio já está em uso" });
     }
 
     res.status(500).json({
@@ -566,6 +586,19 @@ app.get("/:customUrl", async (req, res) => {
     return res.status(200).send("Social Media Preview"); // Não conta o acesso
   }
 
+  const host = req.headers.host;
+
+  let workspace;
+  if (req.isCustomDomain) {
+    workspace = req.workspace;
+  } else {
+    const customUrl = req.params.customUrl;
+    workspace = await Workspace.findOne({ customUrl });
+    if (!workspace) {
+      return res.status(404).send("Workspace não encontrado");
+    }
+  }
+
   // 1. Extrair customUrl e todos os parâmetros da URL
   const fullPath = req.params.customUrl + (req.params[0] || "");
   const [customUrl, ...paramParts] = fullPath.split("&");
@@ -696,6 +729,26 @@ app.get("/:customUrl", async (req, res) => {
       $inc: { accessCount: 1 },
       $push: { accessTimes: now },
     }).catch(console.error);
+
+    if (host !== "zaplinker.com") {
+      // substitua 'zaplinker.com' pelo seu domínio
+      try {
+        const workspace = await Workspace.findOne({ customDomain: host });
+        if (!workspace) {
+          return res.status(404).send("Domínio não encontrado");
+        }
+        req.workspace = workspace;
+        req.isCustomDomain = true;
+        // Redirecione para a URL correta
+        const customUrl = req.params.customUrl;
+        // Verifique se o customUrl é válido para o workspace
+        // ...
+        // Redirecione para a URL correta
+        res.redirect(`/${customUrl}`);
+      } catch (err) {
+        return res.status(500).send("Erro ao verificar domínio");
+      }
+    }
 
     // 14. Redirecionar para a URL do WhatsApp
     res.redirect(whatsappUrl);

@@ -33,6 +33,7 @@ const workspaceSchema = new mongoose.Schema(
       maxlength: 35,
       match: /^[a-zA-Z0-9_-]+$/,
     },
+    customDomain: { type: String, unique: true, sparse: true },
     utmParameters: {
       utm_source: { type: String, default: null },
       utm_medium: { type: String, default: null },
